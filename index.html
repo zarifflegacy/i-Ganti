@@ -16,9 +16,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         // ==========================================
-        // KONFIGURASI BACKEND GOOGLE APPS SCRIPT
+        // KONFIGURASI:
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbxQMO-Egf6paczAWqSPyi19lckaOv0Rky1QPZBFhVSxReX8UtwMz-iXsDd3JhIKOVOD/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzKpROFtyq6fXoPskiopNwuY6PBJYAMVStGtw1Jt72h8ISQlzBxNpMlnNojrl-e6nd_/exec";
         
         tailwind.config = {
             theme: {
@@ -97,8 +97,10 @@
             // Toggle Pemeriksaan Pertembungan Kelas & Guru
             enableClashDetection: true,
             
-            // AppsScript Backend Connection Status
-            isBackendConnected: true, 
+            // AppsScript Backend Connection Status (Auto-detected)
+            isBackendConnected: false, 
+            isCheckingBackend: false,
+            lastCheckedBackend: null,
             
             // Year Selector (Data Separation by Year)
             availableYears: [2026, 2025, 2024],
@@ -193,6 +195,101 @@
                 { id: "REL-103", year: 2026, absentTeacherId: "T102", absentTeacher: "Mohd Ridzuan Ismail", date: new Date().toISOString().split('T')[0], weekId: 'W1', slot: "W3", time: "08:30 - 09:00", subject: "Matematik", className: "2 UKM", substituteId: "T104", substituteName: "Chong Wei Lian", confirmedBySubstitute: true, status: "Disahkan" }
             ]
         };
+
+        // ==========================================
+        // FUNGSI PENGESANAN AUTOMATIK BACKEND APPSCRIPT
+        // ==========================================
+        async function checkAppsScriptConnection(silent = false) {
+            store.isCheckingBackend = true;
+            if (!silent && store.currentUser?.role === 'superadmin') renderApp();
+
+            // Jika API_URL belum ditukar atau kosong, status automatik merah (Disconnected)
+            if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) {
+                store.isBackendConnected = false;
+                store.isCheckingBackend = false;
+                store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                if (store.currentUser?.role === 'superadmin') renderApp();
+                if (!silent) showToast("URL Apps Script belum dikonfigurasi (Terputus).", "error");
+                return false;
+            }
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout 8 saat
+
+                const separator = API_URL.includes('?') ? '&' : '?';
+                const response = await fetch(`${API_URL}${separator}action=ping`, {
+                    method: 'GET',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && (data.status === 'success' || data.connected === true)) {
+                        store.isBackendConnected = true;
+                        store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        if (!silent) showToast("Berjaya disambungkan ke Google Sheet Apps Script!", "success");
+                        
+                        // Sync data awal jika ada daripada backend
+                        if (data.data) syncStoreWithBackend(data.data);
+                    } else {
+                        store.isBackendConnected = false;
+                        if (!silent) showToast("Respon Apps Script tidak sah.", "error");
+                    }
+                } else {
+                    store.isBackendConnected = false;
+                    if (!silent) showToast("Gagal menghubungi pelayan Google Apps Script.", "error");
+                }
+            } catch (error) {
+                store.isBackendConnected = false;
+                if (!silent) showToast("Sambungan ke Google Apps Script gagal / terputus.", "error");
+            } finally {
+                store.isCheckingBackend = false;
+                store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                if (store.currentUser?.role === 'superadmin') renderApp();
+            }
+            return store.isBackendConnected;
+        }
+
+        function syncStoreWithBackend(backendData) {
+            if (!backendData) return;
+            if (Array.isArray(backendData.schools) && backendData.schools.length > 0) store.schools = backendData.schools;
+            if (Array.isArray(backendData.payments) && backendData.payments.length > 0) store.payments = backendData.payments;
+            if (Array.isArray(backendData.teachers) && backendData.teachers.length > 0) store.teachers = backendData.teachers;
+            if (Array.isArray(backendData.classes) && backendData.classes.length > 0) store.classes = backendData.classes;
+            if (Array.isArray(backendData.timetable) && backendData.timetable.length > 0) store.timetable = backendData.timetable;
+            if (Array.isArray(backendData.absences) && backendData.absences.length > 0) store.absences = backendData.absences;
+            if (Array.isArray(backendData.reliefList) && backendData.reliefList.length > 0) store.reliefList = backendData.reliefList;
+            if (Array.isArray(backendData.subjects) && backendData.subjects.length > 0) store.subjects = backendData.subjects;
+            if (Array.isArray(backendData.timeSlots) && backendData.timeSlots.length > 0) store.timeSlots = backendData.timeSlots;
+            if (Array.isArray(backendData.weeks) && backendData.weeks.length > 0) store.weeks = backendData.weeks;
+            if (backendData.settings) {
+                if (backendData.settings.appName) store.appName = backendData.settings.appName;
+                if (backendData.settings.appDesc) store.appDesc = backendData.settings.appDesc;
+                if (backendData.settings.appLogo) store.appLogo = backendData.settings.appLogo;
+                if (backendData.settings.bankName) store.bankInfo.bankName = backendData.settings.bankName;
+                if (backendData.settings.accountName) store.bankInfo.accountName = backendData.settings.accountName;
+                if (backendData.settings.accountNo) store.bankInfo.accountNo = backendData.settings.accountNo;
+                if (backendData.settings.qrCode) store.bankInfo.qrCode = backendData.settings.qrCode;
+            }
+        }
+
+        // HELPER UNTUK HANTAR DATA KE BACKEND APPSCRIPT SECARA AUTOMATIK
+        async function pushToBackend(action, payload) {
+            if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) return;
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, payload })
+                });
+                if (res.ok) {
+                    store.isBackendConnected = true;
+                }
+            } catch (e) {
+                store.isBackendConnected = false;
+            }
+        }
         
         // HELPER UTILITIES
         function parseGoogleDriveUrl(url) {
@@ -271,6 +368,9 @@
             store.currentUser = { role, data: userData };
             store.activeTab = 'dashboard';
             renderApp();
+            if (role === 'superadmin') {
+                checkAppsScriptConnection(true);
+            }
             showToast(`Log masuk berjaya sebagai ${role.toUpperCase()}`, 'success');
         }
         function logout() {
@@ -282,6 +382,9 @@
         function switchTab(tab) {
             store.activeTab = tab;
             renderApp();
+            if (store.currentUser?.role === 'superadmin' && tab === 'dashboard') {
+                checkAppsScriptConnection(true);
+            }
         }
         function changeYear(year) {
             store.selectedYear = parseInt(year);
@@ -578,7 +681,7 @@
             }
         }
         
-        // 2. PAPARAN TETAPAN SUPER ADMIN (KEKALKAN SEMUA FUNGSI)
+        // 2. PAPARAN TETAPAN SUPER ADMIN (PENGESANAN AUTOMATIK STATUS APPSCRIPT)
         function renderSuperAdminView() {
             return `
                 <div class="space-y-6">
@@ -603,11 +706,6 @@
                 </div>
             `;
         }
-        function toggleBackendConnection() {
-            store.isBackendConnected = !store.isBackendConnected;
-            renderApp();
-            showToast(`Status backend ditukar: ${store.isBackendConnected ? 'Connected (Google Sheet Appscript)' : 'Disconnected'}`, store.isBackendConnected ? 'success' : 'error');
-        }
         function sendSchoolReminderWhatsApp(schoolId) {
             const school = store.schools.find(s => s.id === schoolId);
             if (!school) return;
@@ -628,26 +726,42 @@
                 const activeSchools = store.schools.filter(s => s.status === 'aktif');
                 const inactiveSchools = store.schools.filter(s => s.status === 'tidak_aktif');
                 const totalTeachers = store.schools.reduce((acc, s) => acc + s.totalTeachers, 0);
+                
+                // Penentuan warna & label automatik berdasarkan sambungan sebenar ke Google Apps Script
+                const isConnected = store.isBackendConnected;
+                const cardBorderClass = isConnected ? 'border-emerald-200 bg-emerald-50/40' : 'border-red-200 bg-red-50/40';
+                const dotColorClass = isConnected ? 'bg-emerald-500' : 'bg-red-500';
+                const pingColorClass = isConnected ? 'bg-emerald-400 animate-ping' : 'bg-red-400';
+                const textColorClass = isConnected ? 'text-emerald-700' : 'text-red-700';
+                const badgeClass = isConnected ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-red-100 text-red-800 border-red-300';
+
                 return `
                     <div class="space-y-6">
-                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div class="p-4 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 ${cardBorderClass}">
                             <div class="flex items-center space-x-3">
-                                <div class="relative flex items-center justify-center">
-                                    <span class="w-4 h-4 rounded-full ${store.isBackendConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}"></span>
-                                    <span class="absolute w-6 h-6 rounded-full ${store.isBackendConnected ? 'bg-emerald-400 opacity-75 animate-ping' : 'bg-red-400 opacity-75'}"></span>
+                                <div class="relative flex items-center justify-center w-6 h-6">
+                                    <span class="w-3.5 h-3.5 rounded-full ${dotColorClass} z-10"></span>
+                                    <span class="absolute w-6 h-6 rounded-full opacity-75 ${pingColorClass}"></span>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-slate-800 text-sm">Status Sambungan Backend Appscript</h4>
-                                    <p class="text-xs text-slate-500">
-                                        Google Sheet Appscript Backend: 
-                                        <span class="font-bold ${store.isBackendConnected ? 'text-emerald-600' : 'text-red-600'}">
-                                            ${store.isBackendConnected ? 'Connected (Berhubung)' : 'Disconnected (Terputus)'}
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-bold text-slate-800 text-sm">Status Sambungan Backend Appscript</h4>
+                                        <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-full border uppercase tracking-wide ${badgeClass}">
+                                            ${store.isCheckingBackend ? 'Menyemak...' : (isConnected ? 'Tersambung (Hijau)' : 'Tidak Tersambung (Merah)')}
                                         </span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 mt-0.5">
+                                        Google Sheet Appscript Backend: 
+                                        <span class="font-bold ${textColorClass}">
+                                            ${isConnected ? 'Connected - Pangkalan Data Google Sheet Aktif' : 'Disconnected - Sila semak API_URL atau kebenaran Web App'}
+                                        </span>
+                                        ${store.lastCheckedBackend ? `<span class="text-[11px] text-slate-400 ml-2">(Semakan terakhir: ${store.lastCheckedBackend})</span>` : ''}
                                     </p>
                                 </div>
                             </div>
-                            <button onclick="toggleBackendConnection()" class="px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${store.isBackendConnected ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'}">
-                                ${store.isBackendConnected ? 'Simulasikan Terputus Connection' : 'Simulasikan Connected'}
+                            <button onclick="checkAppsScriptConnection(false)" ${store.isCheckingBackend ? 'disabled' : ''} class="px-3.5 py-2 text-xs font-bold rounded-xl border transition-all flex items-center justify-center space-x-2 shadow-sm ${isConnected ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' : 'bg-red-600 hover:bg-red-700 text-white border-red-600'}">
+                                <i class="fas fa-sync-alt ${store.isCheckingBackend ? 'fa-spin' : ''}"></i>
+                                <span>${store.isCheckingBackend ? 'Menyemak Sambungan...' : 'Uji Sambungan Semula'}</span>
                             </button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -756,6 +870,7 @@
             e.preventDefault();
             store.superAdminAuth.ic = document.getElementById('sa-edit-ic').value.trim();
             store.superAdminAuth.pass = document.getElementById('sa-edit-pass').value.trim();
+            pushToBackend('saveSuperAdminAuth', store.superAdminAuth);
             showToast("Kredential Super Admin berjaya dikemaskini!", "success");
         }
         function renderSchoolManagement() {
@@ -842,6 +957,7 @@
         function deleteSchool(id) {
             showConfirm("Padam Maklumat Sekolah", "Adakah anda pasti untuk memadam rekod sekolah ini?", () => {
                 store.schools = store.schools.filter(s => s.id !== id);
+                pushToBackend('deleteSchool', { id });
                 renderApp();
                 showToast("Maklumat sekolah telah dipadam.", "success");
             });
@@ -936,15 +1052,21 @@
             const pass = document.getElementById('m-admin-pass').value;
             const status = document.getElementById('m-school-status').value;
             const daysLeft = parseInt(document.getElementById('m-school-days').value) || 0;
+            let payloadObj;
             if (schoolId && schoolId !== 'null') {
                 const school = store.schools.find(s => s.id === schoolId);
-                if (school) Object.assign(school, { name, code, phone, email, address, adminName, ic, pass, status, daysLeft });
+                if (school) {
+                    Object.assign(school, { name, code, phone, email, address, adminName, ic, pass, status, daysLeft });
+                    payloadObj = school;
+                }
             } else {
-                store.schools.push({
+                payloadObj = {
                     id: 'SK' + Date.now(),
                     name, code, phone, email, address, adminName, ic, pass, status, daysLeft, totalTeachers: 0
-                });
+                };
+                store.schools.push(payloadObj);
             }
+            pushToBackend('saveSchool', payloadObj);
             document.getElementById('school-form-modal').remove();
             renderApp();
             showToast("Data sekolah berjaya dikemas kini!", "success");
@@ -1063,6 +1185,7 @@
             store.bankInfo.accountName = document.getElementById('bank-acc-name').value;
             store.bankInfo.accountNo = document.getElementById('bank-acc-no').value;
             store.bankInfo.qrCode = document.getElementById('bank-qr-code').value;
+            pushToBackend('saveSettings', { ...store.bankInfo, appName: store.appName, appDesc: store.appDesc, appLogo: store.appLogo });
             renderApp();
             showToast("Maklumat akaun bank & pautan QR Code berjaya disimpan!", "success");
         }
@@ -1070,6 +1193,7 @@
             const p = store.payments.find(pay => pay.id === payId);
             if (p) {
                 p.status = p.status === 'sudah_bayar' ? 'belum_bayar' : 'sudah_bayar';
+                pushToBackend('savePayment', p);
                 renderApp();
                 showToast(`Status bayaran untuk ${p.schoolName} ditukar.`, "success");
             }
@@ -1077,6 +1201,7 @@
         function deletePayment(payId) {
             showConfirm("Padam Resit Bayaran", "Adakah anda pasti mahu memadam rekod bayaran ini?", () => {
                 store.payments = store.payments.filter(p => p.id !== payId);
+                pushToBackend('deletePayment', { id: payId });
                 renderApp();
                 showToast("Rekod bayaran dipadam.");
             });
@@ -1145,26 +1270,31 @@
             const endDate = document.getElementById('r-end').value;
             const fileUrl = document.getElementById('r-file').value;
             const status = document.getElementById('r-status').value;
+            let payObj;
             if (payId && payId !== 'null') {
                 const pay = store.payments.find(p => p.id === payId);
                 if (pay) {
                     Object.assign(pay, { schoolName, amount, startDate, endDate, fileUrl, status });
+                    payObj = pay;
                 }
             } else {
-                store.payments.push({
+                const matchedSchool = store.schools.find(s => s.name === schoolName);
+                payObj = {
                     id: 'PAY-' + Math.floor(1000 + Math.random() * 9000),
-                    schoolCode: 'SK-' + Math.floor(100 + Math.random() * 900),
+                    schoolCode: matchedSchool ? matchedSchool.code : 'SK-' + Math.floor(100 + Math.random() * 900),
                     schoolName,
                     amount,
                     startDate,
                     endDate,
                     fileUrl,
                     status
-                });
+                };
+                store.payments.push(payObj);
             }
+            pushToBackend('savePayment', payObj);
             document.getElementById('receipt-modal').remove();
             renderApp();
-            showToast("Resit langganan sekolah berjaya dikeluarkannya!", "success");
+            showToast("Resit langganan sekolah berjaya dikeluarkan!", "success");
         }
         function renderAppLogoSettings() {
             const logoUrl = store.appLogo;
@@ -1204,6 +1334,7 @@
             store.appName = document.getElementById('app-name-input').value;
             store.appDesc = document.getElementById('app-desc-input').value;
             store.appLogo = document.getElementById('app-logo-input').value;
+            pushToBackend('saveSettings', { ...store.bankInfo, appName: store.appName, appDesc: store.appDesc, appLogo: store.appLogo });
             renderApp();
             showToast("Tetapan Logo & Nama Aplikasi berjaya diperkemas!", "success");
         }
@@ -1461,15 +1592,21 @@
             const name = document.getElementById('w-name').value;
             const startDate = document.getElementById('w-start').value;
             const endDate = document.getElementById('w-end').value;
+            let weekObj;
             if (weekId && weekId !== 'null') {
                 const w = store.weeks.find(item => item.id === weekId);
-                if (w) Object.assign(w, { name, startDate, endDate });
+                if (w) {
+                    Object.assign(w, { name, startDate, endDate });
+                    weekObj = w;
+                }
             } else {
-                store.weeks.push({
+                weekObj = {
                     id: 'W' + Date.now(),
                     name, startDate, endDate
-                });
+                };
+                store.weeks.push(weekObj);
             }
+            pushToBackend('saveWeek', weekObj);
             document.getElementById('week-modal').remove();
             renderApp();
             showToast("Tetapan minggu berjaya disimpan!", "success");
@@ -1477,6 +1614,7 @@
         function deleteWeek(weekId) {
             showConfirm("Padam Minggu", "Adakah anda pasti untuk memadam rekod minggu ini?", () => {
                 store.weeks = store.weeks.filter(w => w.id !== weekId);
+                pushToBackend('deleteWeek', { id: weekId });
                 renderApp();
                 showToast("Rekod minggu dipadam.");
             });
@@ -1551,15 +1689,21 @@
             const name = document.getElementById('cls-name').value;
             const classTeacher = document.getElementById('cls-teacher').value;
             const totalStudents = parseInt(document.getElementById('cls-students').value) || 0;
+            let clsObj;
             if (classId && classId !== 'null') {
                 const cls = store.classes.find(c => c.id === classId);
-                if (cls) Object.assign(cls, { name, classTeacher, totalStudents });
+                if (cls) {
+                    Object.assign(cls, { name, classTeacher, totalStudents });
+                    clsObj = cls;
+                }
             } else {
-                store.classes.push({
+                clsObj = {
                     id: 'C' + Date.now(),
                     name, classTeacher, totalStudents
-                });
+                };
+                store.classes.push(clsObj);
             }
+            pushToBackend('saveClass', clsObj);
             document.getElementById('class-modal').remove();
             renderApp();
             showToast("Maklumat kelas berjaya dikemaskini!", "success");
@@ -1567,6 +1711,7 @@
         function deleteClass(classId) {
             showConfirm("Padam Kelas", "Adakah anda pasti untuk memadam kelas ini?", () => {
                 store.classes = store.classes.filter(c => c.id !== classId);
+                pushToBackend('deleteClass', { id: classId });
                 renderApp();
                 showToast("Kelas telah dipadam.", "success");
             });
@@ -1657,6 +1802,7 @@
             const pay = store.payments.find(p => p.id === invId);
             if (pay) {
                 pay.fileUrl = url;
+                pushToBackend('savePayment', pay);
                 showToast(`Resit pembayaran untuk ${invId} berjaya dimuat naik!`, "success");
             }
             document.getElementById('invoice-upload-modal').remove();
@@ -1795,6 +1941,7 @@
             const val = document.getElementById('new-subj-input').value.trim();
             if (val && !store.subjects.includes(val)) {
                 store.subjects.push(val);
+                pushToBackend('saveSubjects', { subjects: store.subjects });
                 showToast(`Subjek "${val}" berjaya ditambah.`, "success");
                 document.getElementById('manage-subjects-modal').remove();
                 openManageSubjectsModal();
@@ -1810,6 +1957,7 @@
                     const sIdx = t.subjects.indexOf(oldVal);
                     if (sIdx !== -1) t.subjects[sIdx] = newVal;
                 });
+                pushToBackend('saveSubjects', { subjects: store.subjects });
                 showToast(`Subjek dikemas kini ke "${newVal}"`, "success");
                 renderApp();
             }
@@ -1821,6 +1969,7 @@
                 store.teachers.forEach(t => {
                     t.subjects = t.subjects.filter(s => s !== subjName);
                 });
+                pushToBackend('saveSubjects', { subjects: store.subjects });
                 document.getElementById('manage-subjects-modal').remove();
                 openManageSubjectsModal();
                 renderApp();
@@ -1908,15 +2057,21 @@
             const position = document.getElementById('t-position').value;
             const teachingSlots = parseInt(document.getElementById('t-slots').value) || 0;
             const selectedSubjs = Array.from(document.querySelectorAll('.t-subj-check:checked')).map(cb => cb.value);
+            let teacherObj;
             if (teacherId && teacherId !== 'null') {
                 const t = store.teachers.find(item => item.id === teacherId);
-                if (t) Object.assign(t, { name, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs });
+                if (t) {
+                    Object.assign(t, { name, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs });
+                    teacherObj = t;
+                }
             } else {
-                store.teachers.push({
+                teacherObj = {
                     id: 'T' + Date.now(),
                     name, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs, session: 'pagi'
-                });
+                };
+                store.teachers.push(teacherObj);
             }
+            pushToBackend('saveTeacher', teacherObj);
             document.getElementById('teacher-form-modal').remove();
             renderApp();
             showToast("Maklumat guru dikemas kini!", "success");
@@ -1924,6 +2079,7 @@
         function deleteTeacher(id) {
             showConfirm("Padam Maklumat Guru", "Adakah anda pasti untuk memadam guru ini?", () => {
                 store.teachers = store.teachers.filter(t => t.id !== id);
+                pushToBackend('deleteTeacher', { id });
                 renderApp();
                 showToast("Maklumat guru dipadam.");
             });
@@ -2043,6 +2199,7 @@
                 const lines = text.split('\n');
                 let addedCount = 0;
                 let errorCount = 0;
+                const addedItems = [];
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
@@ -2060,7 +2217,7 @@
                             }
                         }
                         
-                        store.timetable.push({
+                        const newEntry = {
                             id: 'TT' + Date.now() + Math.floor(Math.random() * 1000),
                             year: store.selectedYear,
                             teacherName,
@@ -2068,10 +2225,13 @@
                             slot,
                             subject,
                             className
-                        });
+                        };
+                        store.timetable.push(newEntry);
+                        addedItems.push(newEntry);
                         addedCount++;
                     }
                 }
+                if (addedItems.length > 0) pushToBackend('bulkSaveTimetable', { entries: addedItems });
                 renderApp();
                 showToast(`Muat naik selesai! ${addedCount} entry ditambah. (${errorCount} ditolak kerana bertembung)`, addedCount > 0 ? "success" : "error");
             };
@@ -2122,11 +2282,13 @@
                 showToast("Sila lengkapkan kod slot dan masa!", "error");
                 return;
             }
-            store.timeSlots.push({
+            const slotObj = {
                 id: 'SLOT-' + Date.now(),
                 slot: slotIdVal,
                 time: slotTimeVal
-            });
+            };
+            store.timeSlots.push(slotObj);
+            pushToBackend('saveTimeSlots', { timeSlots: store.timeSlots });
             showToast(`Slot ${slotIdVal} berjaya ditambah!`, "success");
             document.getElementById('slots-modal').remove();
             openManageTimeSlotsModal();
@@ -2137,6 +2299,7 @@
             const slot = store.timeSlots.find(s => s.id === slotId);
             if (slot) {
                 slot.time = newTime;
+                pushToBackend('saveTimeSlots', { timeSlots: store.timeSlots });
                 showToast(`Waktu bagi slot ${slot.slot} berjaya dikemaskini ke ${newTime}`, "success");
                 renderApp();
             }
@@ -2144,6 +2307,7 @@
         function deleteTimeSlot(slotId) {
             showConfirm("Padam Slot Masa", "Adakah anda pasti mahu memadam slot masa ini?", () => {
                 store.timeSlots = store.timeSlots.filter(s => s.id !== slotId);
+                pushToBackend('saveTimeSlots', { timeSlots: store.timeSlots });
                 document.getElementById('slots-modal').remove();
                 openManageTimeSlotsModal();
                 renderApp();
@@ -2238,18 +2402,21 @@
                 }
             }
             
-            store.timetable.push({
+            const newEntry = {
                 id: 'TT' + Date.now(),
                 year: store.selectedYear,
                 teacherName,
                 day, slot, subject, className
-            });
+            };
+            store.timetable.push(newEntry);
+            pushToBackend('saveTimetableEntry', newEntry);
             document.getElementById('add-tt-modal').remove();
             renderApp();
             showToast("Entry jadual berjaya ditambah!", "success");
         }
         function deleteTimetableEntry(id) {
             store.timetable = store.timetable.filter(tt => tt.id !== id);
+            pushToBackend('deleteTimetableEntry', { id });
             renderApp();
             showToast("Entry jadual dipadam.");
         }
@@ -2352,13 +2519,15 @@
             const teacher = store.teachers.find(t => t.id === teacherId);
             const date = document.getElementById('abs-date').value;
             const reason = document.getElementById('abs-reason').value;
+            let absObj;
             if (absId && absId !== 'null') {
                 const abs = store.absences.find(a => a.id === absId);
                 if (abs) {
                     Object.assign(abs, { teacherId, teacherName: teacher ? teacher.name : '', date, reason, year: store.selectedYear });
+                    absObj = abs;
                 }
             } else {
-                store.absences.push({
+                absObj = {
                     id: 'ABS-' + Date.now(),
                     year: store.selectedYear,
                     teacherId,
@@ -2366,8 +2535,10 @@
                     date,
                     reason,
                     timestamp: new Date().toTimeString().substring(0, 5)
-                });
+                };
+                store.absences.push(absObj);
             }
+            pushToBackend('saveAbsence', absObj);
             document.getElementById('abs-modal').remove();
             autoUpdateReliefFromAbsences(date);
             renderApp();
@@ -2378,6 +2549,7 @@
                 const absObj = store.absences.find(a => a.id === absId);
                 const absDate = absObj ? absObj.date : store.absentFilterDate;
                 store.absences = store.absences.filter(a => a.id !== absId);
+                pushToBackend('deleteAbsence', { id: absId });
                 autoUpdateReliefFromAbsences(absDate);
                 renderApp();
                 showToast("Rekod ketidakhadiran dipadam dan jadual ganti dikemaskini.", "success");
@@ -2387,7 +2559,10 @@
             const dayName = getDayNameFromDate(targetDate);
             const absentForDate = store.absences.filter(a => (a.year || 2026) === store.selectedYear && a.date === targetDate);
             store.reliefList = store.reliefList.filter(r => !((r.year || 2026) === store.selectedYear && r.date === targetDate));
-            if (absentForDate.length === 0) return;
+            if (absentForDate.length === 0) {
+                pushToBackend('syncReliefDate', { date: targetDate, year: store.selectedYear, reliefs: [] });
+                return;
+            }
             
             let updatedReliefs = [];
             absentForDate.forEach(abs => {
@@ -2422,6 +2597,7 @@
                 });
             });
             store.reliefList = store.reliefList.concat(updatedReliefs);
+            pushToBackend('syncReliefDate', { date: targetDate, year: store.selectedYear, reliefs: updatedReliefs });
         }
         
         // 3.5 GURU GANTI 
@@ -2612,6 +2788,7 @@
             if (rel && teacher) {
                 rel.substituteId = teacher.id;
                 rel.substituteName = teacher.name;
+                pushToBackend('saveRelief', rel);
                 showToast(`Guru Ganti ditukar kepada ${teacher.name}`, "success");
             }
             document.getElementById('sub-manual-modal').remove();
@@ -2805,45 +2982,36 @@
             });
         }
         
-        // 4. PAPARAN TETAPAN GURU (DENGAN PENAMBAHBAIKAN SINKRONI WAKTU GANTI MENGIKUT HARI)
+        // 4. PAPARAN TETAPAN GURU (KEKALKAN SEMUA FUNGSI)
         function renderTeacherView() {
             const currentTeacher = store.currentUser.data;
             const days = ["Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"];
             const weekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
             
-            // Dapatkan maklumat guru semasa daripada store
             const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
             
-            // Filter tugas ganti mengikut tarikh pilihan guru
             const myDutyReliefs = store.reliefList.filter(r => 
                 (r.year || 2026) === store.selectedYear &&
                 (r.substituteId === realTeacherObj.id || r.substituteName === realTeacherObj.name) &&
                 r.date === store.teacherDutyDate
             );
             
-            // Dapatkan Nama Hari berdasarkan tarikh pilihan guru (cth: "Isnin", "Selasa")
             const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
             
-            // Pengiraan Waktu Ganti mengikut HARI pilihan (disinkronkan dengan tarikh & hari)
             const reliefOnSelectedDay = store.reliefList.filter(r => 
                 (r.year || 2026) === store.selectedYear &&
                 r.substituteName === realTeacherObj.name &&
                 r.date === store.teacherDutyDate
             ).length;
             
-            // Pengiraan Waktu Ganti mengikut MINGGU pilihan
             const currentReliefSlotsInWeek = store.reliefList.filter(r => 
                 (r.year || 2026) === store.selectedYear &&
                 r.substituteName === realTeacherObj.name &&
                 r.weekId === store.selectedWeekId
             ).length;
             
-            // Waktu mengajar hakiki mingguan
             const hakikiSlotsWeekly = realTeacherObj.teachingSlots || 0;
-            
-            // Anggaran Waktu Hakiki pada Hari berkenaan
             const hakikiSlotsDaily = Math.round(hakikiSlotsWeekly / 5);
-
             return `
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -3010,6 +3178,7 @@
             if (rel) {
                 rel.confirmedBySubstitute = true;
                 rel.status = "Disahkan";
+                pushToBackend('saveRelief', rel);
                 renderApp();
                 showToast("Tugas guru ganti berjaya disahkan!", "success");
             }
@@ -3051,7 +3220,7 @@
             const currentTeacher = store.currentUser.data;
             const date = document.getElementById('t-abs-date').value;
             const reason = document.getElementById('t-abs-reason').value;
-            store.absences.push({
+            const absObj = {
                 id: 'ABS-' + Date.now(),
                 year: store.selectedYear,
                 teacherId: currentTeacher.id,
@@ -3059,7 +3228,9 @@
                 date,
                 reason,
                 timestamp: new Date().toTimeString().substring(0, 5)
-            });
+            };
+            store.absences.push(absObj);
+            pushToBackend('saveAbsence', absObj);
             autoUpdateReliefFromAbsences(date);
             document.getElementById('teacher-self-abs-modal').remove();
             showToast("Sebab ketidakhadiran dihantar & jadual ganti dikemaskini!", "success");
@@ -3093,7 +3264,6 @@
                 const realTeacherObj = store.teachers.find(t => t.id === me.id || t.name === me.name) || me;
                 const daysList = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat'];
                 
-                // Kira waktu ganti bagi setiap hari khusus untuk cikgu berkenaan
                 const reliefPerDay = daysList.map(dayName => {
                     return store.reliefList.filter(r => 
                         (r.year || 2026) === store.selectedYear &&
@@ -3104,7 +3274,6 @@
                 });
                 
                 const avgHakikiPerDay = Math.round(realTeacherObj.teachingSlots / 5);
-
                 new Chart(stCanvas.getContext('2d'), {
                     type: 'bar',
                     data: {
@@ -3132,6 +3301,14 @@
         // INITIAL STARTUP
         window.onload = function() {
             renderApp();
+            // Semak sambungan Google Apps Script secara automatik semasa aplikasi bermula
+            checkAppsScriptConnection(true);
+            // Semakan berkala setiap 30 saat jika berada di paparan Super Admin
+            setInterval(() => {
+                if (store.currentUser && store.currentUser.role === 'superadmin') {
+                    checkAppsScriptConnection(true);
+                }
+            }, 30000);
         };
     </script>
 </body>
