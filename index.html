@@ -18,7 +18,7 @@
         // ==========================================
         // KONFIGURASI:
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbx9kL6wqSozTl9FoKX5FuILYupnmo6_CDdDS4r11ojh63Oe4dGhfU8dbZ_m1gfNZM7X2Q/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbywVjM7bHIDzRTWkpL3UXsGjJOvh1ERCByvWpg0YYItW6iiH-8XvJzAoXFaYoLjIxljqQ/exec";
         
         tailwind.config = {
             theme: {
@@ -70,6 +70,7 @@
         <i id="toast-icon" class="fas fa-info-circle text-brand-500 text-lg"></i>
         <span id="toast-message" class="text-sm font-medium">Mesej Notifikasi</span>
     </div>
+
     <!-- MODAL CONFIRMATION DIALOG -->
     <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-95 opacity-0" id="confirm-modal-content">
@@ -84,8 +85,20 @@
             </div>
         </div>
     </div>
+
     <!-- MAIN APP SCRIPT LOGIC -->
     <script>
+        // Mendapatkan tarikh semasa mengikut zon waktu tempatan
+        function getLocalTodayStr() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        }
+
+        const currentYearReal = new Date().getFullYear();
+        const todayStr = getLocalTodayStr();
+
         // GLOBAL DATA STORE
         const store = {
             appLogo: "https://placehold.co/120x120/0284c7/ffffff?text=i-Ganti",
@@ -104,24 +117,30 @@
             
             // Year Selector (Data Separation by Year)
             availableYears: [2026, 2025, 2024],
-            selectedYear: 2026,
-            // Teacher Duty View Date Filter
-            teacherDutyDate: new Date().toISOString().split('T')[0],
+            selectedYear: currentYearReal || 2026,
+            
+            // Teacher Duty View Date Filter (Sentiasa bermula dengan tarikh & hari semasa)
+            teacherDutyDate: todayStr,
             
             // Weeks settings (Minggu 1 - 43)
-            weeks: Array.from({ length: 43 }, (_, i) => ({
-                id: `W${i + 1}`,
-                name: `Minggu ${i + 1}`,
-                startDate: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
-                endDate: `2026-01-${String(((i % 28) + 5) > 28 ? 28 : (i % 28) + 5).padStart(2, '0')}`
-            })),
+            weeks: Array.from({ length: 43 }, (_, i) => {
+                const baseDate = new Date(currentYearReal || 2026, 0, 5 + (i * 7));
+                const endDate = new Date(baseDate);
+                endDate.setDate(baseDate.getDate() + 4);
+                return {
+                    id: `W${i + 1}`,
+                    name: `Minggu ${i + 1}`,
+                    startDate: baseDate.toISOString().split('T')[0],
+                    endDate: endDate.toISOString().split('T')[0]
+                };
+            }),
             selectedWeekId: 'W1',
-            viewAllWeeksWorkload: false, // For "Keseluruhan" workload button
+            viewAllWeeksWorkload: false,
             
             // Date Filters for Lists
-            absentFilterDate: new Date().toISOString().split('T')[0],
-            reliefFilterDate: new Date().toISOString().split('T')[0],
-            selectedReliefGenDate: new Date().toISOString().split('T')[0],
+            absentFilterDate: todayStr,
+            reliefFilterDate: todayStr,
+            selectedReliefGenDate: todayStr,
             
             // Super Admin Credentials
             superAdminAuth: {
@@ -186,24 +205,43 @@
                 { id: "TT8", year: 2026, teacherName: "K. Arumugam", day: "Isnin", slot: "W4", subject: "PJPK", className: "1 USM" }
             ],
             absences: [
-                { id: "ABS-1", year: 2026, teacherId: "T101", teacherName: "Siti Aminah Hassan", date: new Date().toISOString().split('T')[0], reason: "Cuti Sakit (MC Hospital Serdang)", timestamp: "07:15" },
-                { id: "ABS-2", year: 2026, teacherId: "T102", teacherName: "Mohd Ridzuan Ismail", date: new Date().toISOString().split('T')[0], reason: "Kursus Luar Jabatan Pendidikan", timestamp: "07:30" }
+                { id: "ABS-1", year: 2026, teacherId: "T101", teacherName: "Siti Aminah Hassan", date: todayStr, reason: "Cuti Sakit (MC Hospital Serdang)", timestamp: "07:15" },
+                { id: "ABS-2", year: 2026, teacherId: "T102", teacherName: "Mohd Ridzuan Ismail", date: todayStr, reason: "Kursus Luar Jabatan Pendidikan", timestamp: "07:30" }
             ],
             reliefList: [
-                { id: "REL-101", year: 2026, absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: new Date().toISOString().split('T')[0], weekId: 'W1', slot: "W1", time: "07:30 - 08:00", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T103", substituteName: "Nurul Huda Zulkifli", confirmedBySubstitute: true, status: "Disahkan" },
-                { id: "REL-102", year: 2026, absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: new Date().toISOString().split('T')[0], weekId: 'W1', slot: "W2", time: "08:00 - 08:30", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T105", substituteName: "K. Arumugam", confirmedBySubstitute: false, status: "Belum Disahkan" },
-                { id: "REL-103", year: 2026, absentTeacherId: "T102", absentTeacher: "Mohd Ridzuan Ismail", date: new Date().toISOString().split('T')[0], weekId: 'W1', slot: "W3", time: "08:30 - 09:00", subject: "Matematik", className: "2 UKM", substituteId: "T104", substituteName: "Chong Wei Lian", confirmedBySubstitute: true, status: "Disahkan" }
+                { id: "REL-101", year: 2026, absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: todayStr, weekId: 'W1', slot: "W1", time: "07:30 - 08:00", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T103", substituteName: "Nurul Huda Zulkifli", confirmedBySubstitute: true, status: "Disahkan" },
+                { id: "REL-102", year: 2026, absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: todayStr, weekId: 'W1', slot: "W2", time: "08:00 - 08:30", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T105", substituteName: "K. Arumugam", confirmedBySubstitute: false, status: "Belum Disahkan" },
+                { id: "REL-103", year: 2026, absentTeacherId: "T102", absentTeacher: "Mohd Ridzuan Ismail", date: todayStr, weekId: 'W1', slot: "W3", time: "08:30 - 09:00", subject: "Matematik", className: "2 UKM", substituteId: "T104", substituteName: "Chong Wei Lian", confirmedBySubstitute: true, status: "Disahkan" }
             ]
         };
 
+        // Fungsi mengesan minggu semasa berdasarkan tarikh
+        function detectWeekIdFromDate(dateStr) {
+            if (!dateStr) return store.selectedWeekId;
+            const targetTime = new Date(dateStr).getTime();
+            const found = store.weeks.find(w => {
+                const start = new Date(w.startDate).getTime();
+                const end = new Date(w.endDate).getTime();
+                return targetTime >= start && targetTime <= end;
+            });
+            if (found) return found.id;
+            const d = new Date(dateStr);
+            const startOfYear = new Date(d.getFullYear(), 0, 1);
+            const diffDays = Math.floor((d - startOfYear) / (24 * 60 * 60 * 1000));
+            const weekNum = Math.min(Math.max(Math.ceil((diffDays + 1) / 7), 1), store.weeks.length);
+            return `W${weekNum}`;
+        }
+
+        // Set minggu semasa secara automatik pada permulaan
+        store.selectedWeekId = detectWeekIdFromDate(todayStr);
+
         // ==========================================
-        // FUNGSI PENGESANAN AUTOMATIK BACKEND APPSCRIPT
+        // FUNGSI PENGESANAN & PENYIMPANAN BACKEND APPSCRIPT
         // ==========================================
         async function checkAppsScriptConnection(silent = false) {
             store.isCheckingBackend = true;
             if (!silent && store.currentUser?.role === 'superadmin') renderApp();
-
-            // Jika API_URL belum ditukar atau kosong, status automatik merah (Disconnected)
+            
             if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) {
                 store.isBackendConnected = false;
                 store.isCheckingBackend = false;
@@ -212,27 +250,25 @@
                 if (!silent) showToast("URL Apps Script belum dikonfigurasi (Terputus).", "error");
                 return false;
             }
-
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout 8 saat
-
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
                 const separator = API_URL.includes('?') ? '&' : '?';
                 const response = await fetch(`${API_URL}${separator}action=ping`, {
                     method: 'GET',
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-
                 if (response.ok) {
                     const data = await response.json();
                     if (data && (data.status === 'success' || data.connected === true)) {
                         store.isBackendConnected = true;
                         store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         if (!silent) showToast("Berjaya disambungkan ke Google Sheet Apps Script!", "success");
-                        
-                        // Sync data awal jika ada daripada backend
-                        if (data.data) syncStoreWithBackend(data.data);
+                        if (data.data) {
+                            syncStoreWithBackend(data.data);
+                            renderApp();
+                        }
                     } else {
                         store.isBackendConnected = false;
                         if (!silent) showToast("Respon Apps Script tidak sah.", "error");
@@ -275,16 +311,22 @@
             }
         }
 
-        // HELPER UNTUK HANTAR DATA KE BACKEND APPSCRIPT SECARA AUTOMATIK
         async function pushToBackend(action, payload) {
             if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) return;
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
                     body: JSON.stringify({ action, payload })
                 });
                 if (res.ok) {
-                    store.isBackendConnected = true;
+                    const result = await res.json();
+                    if (result && result.status === 'success') {
+                        store.isBackendConnected = true;
+                        store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    }
                 }
             } catch (e) {
                 store.isBackendConnected = false;
@@ -310,8 +352,13 @@
         }
         function getDayNameFromDate(dateString) {
             const days = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
-            const d = new Date(dateString);
-            return days[d.getDay()];
+            const [y, m, d] = dateString.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            return days[dateObj.getDay()];
+        }
+        function getYearFromDate(dateString) {
+            if (!dateString) return store.selectedYear;
+            return parseInt(dateString.split('-')[0], 10);
         }
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
@@ -362,11 +409,53 @@
                 onConfirm();
             };
         }
+
+        // ==========================================
+        // HELPER PENGIRAAN MASA MENGAJAR HAKIKI & GANTI (SYNC JADUAL WAKTU INDUK SEKOLAH)
+        // ==========================================
+        function getTeacherHakikiSlotsForYear(teacherObj, year) {
+            const timetableEntries = store.timetable.filter(tt => 
+                Number(tt.year || 2026) === Number(year) && 
+                tt.teacherName.trim().toLowerCase() === teacherObj.name.trim().toLowerCase()
+            );
+            if (timetableEntries.length > 0) {
+                return timetableEntries.length;
+            }
+            return Number(year) === 2026 ? (Number(teacherObj.teachingSlots) || 0) : 0;
+        }
+
+        // Mengira secara tepat bilangan slot guru dalam Jadual Waktu Induk Sekolah pada hari semasa
+        function getTeacherHakikiSlotsForDay(teacherObj, dayName, year) {
+            const yearTimetable = store.timetable.filter(tt => 
+                Number(tt.year || 2026) === Number(year) && 
+                tt.teacherName.trim().toLowerCase() === teacherObj.name.trim().toLowerCase()
+            );
+
+            // Jika guru mempunyai rekod dalam Jadual Waktu Induk Sekolah untuk tahun tersebut,
+            // pulangkan jumlah sebenar slot pada hari berkenaan (termasuk 0 jika hari itu tiada kelas)
+            if (yearTimetable.length > 0) {
+                return yearTimetable.filter(tt => tt.day === dayName).length;
+            }
+
+            // Fallback hanya jika Jadual Waktu Induk Sekolah belum diisi langsung bagi guru tersebut
+            const totalYearHakiki = getTeacherHakikiSlotsForYear(teacherObj, year);
+            if (totalYearHakiki > 0 && ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat'].includes(dayName)) {
+                return Math.round(totalYearHakiki / 5);
+            }
+            return 0;
+        }
         
         // NAVIGATION LOGIC
         function setRole(role, userData = {}) {
             store.currentUser = { role, data: userData };
             store.activeTab = 'dashboard';
+            if (role === 'teacher') {
+                // Sentiasa mulakan dengan tarikh dan hari semasa apabila guru log masuk
+                const currentToday = getLocalTodayStr();
+                store.teacherDutyDate = currentToday;
+                store.selectedYear = getYearFromDate(currentToday);
+                store.selectedWeekId = detectWeekIdFromDate(currentToday);
+            }
             renderApp();
             if (role === 'superadmin') {
                 checkAppsScriptConnection(true);
@@ -387,9 +476,21 @@
             }
         }
         function changeYear(year) {
-            store.selectedYear = parseInt(year);
+            const parsedYear = parseInt(year);
+            store.selectedYear = parsedYear;
+            
+            const syncDateWithYear = (dStr) => {
+                if (!dStr) return `${parsedYear}-01-05`;
+                const parts = dStr.split('-');
+                return `${parsedYear}-${parts[1]}-${parts[2]}`;
+            };
+            store.teacherDutyDate = syncDateWithYear(store.teacherDutyDate);
+            store.absentFilterDate = syncDateWithYear(store.absentFilterDate);
+            store.reliefFilterDate = syncDateWithYear(store.reliefFilterDate);
+            store.selectedReliefGenDate = syncDateWithYear(store.selectedReliefGenDate);
+            store.selectedWeekId = detectWeekIdFromDate(store.teacherDutyDate);
             renderApp();
-            showToast(`Data ditukar ke Tahun ${store.selectedYear}`, 'info');
+            showToast(`Data disinkronkan ke Tahun ${store.selectedYear}`, 'info');
         }
         
         // PENGURUSAN TAHUN DASHBOARD
@@ -681,7 +782,7 @@
             }
         }
         
-        // 2. PAPARAN TETAPAN SUPER ADMIN (PENGESANAN AUTOMATIK STATUS APPSCRIPT)
+        // 2. PAPARAN TETAPAN SUPER ADMIN (KEKALKAN SEMUA FUNGSI)
         function renderSuperAdminView() {
             return `
                 <div class="space-y-6">
@@ -727,14 +828,12 @@
                 const inactiveSchools = store.schools.filter(s => s.status === 'tidak_aktif');
                 const totalTeachers = store.schools.reduce((acc, s) => acc + s.totalTeachers, 0);
                 
-                // Penentuan warna & label automatik berdasarkan sambungan sebenar ke Google Apps Script
                 const isConnected = store.isBackendConnected;
                 const cardBorderClass = isConnected ? 'border-emerald-200 bg-emerald-50/40' : 'border-red-200 bg-red-50/40';
                 const dotColorClass = isConnected ? 'bg-emerald-500' : 'bg-red-500';
                 const pingColorClass = isConnected ? 'bg-emerald-400 animate-ping' : 'bg-red-400';
                 const textColorClass = isConnected ? 'text-emerald-700' : 'text-red-700';
                 const badgeClass = isConnected ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-red-100 text-red-800 border-red-300';
-
                 return `
                     <div class="space-y-6">
                         <div class="p-4 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 ${cardBorderClass}">
@@ -1378,10 +1477,10 @@
         }
         function renderSchoolTabContent() {
             if (store.activeTab === 'dashboard') {
-                const yearAbsents = store.absences.filter(a => (a.year || 2026) === store.selectedYear);
+                const yearAbsents = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(store.selectedYear));
                 const filterAbsents = yearAbsents.filter(a => a.date === store.absentFilterDate);
                 
-                const yearReliefs = store.reliefList.filter(r => (r.year || 2026) === store.selectedYear);
+                const yearReliefs = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear));
                 const dateFilteredReliefs = yearReliefs.filter(r => r.date === store.reliefFilterDate);
                 return `
                     <div class="space-y-6">
@@ -1502,10 +1601,12 @@
         }
         function changeAbsentDate(d) {
             store.absentFilterDate = d;
+            store.selectedYear = getYearFromDate(d);
             renderApp();
         }
         function changeReliefDate(d) {
             store.reliefFilterDate = d;
+            store.selectedYear = getYearFromDate(d);
             renderApp();
         }
         
@@ -1841,7 +1942,7 @@
                                         <th class="p-4">Nama Guru</th>
                                         <th class="p-4">No. IC & Kata Laluan</th>
                                         <th class="p-4">Subjek Mengajar</th>
-                                        <th class="p-4">Waktu Mengajar</th>
+                                        <th class="p-4">Waktu Mengajar (${store.selectedYear})</th>
                                         <th class="p-4 text-center">Tindakan</th>
                                     </tr>
                                 </thead>
@@ -1855,38 +1956,41 @@
             `;
         }
         function renderTeacherRows(list) {
-            return list.map(t => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="p-4">
-                        <div class="font-bold text-slate-800">${t.name}</div>
-                        <div class="text-xs text-slate-400">${t.position || 'Guru'} | Emel: ${t.email}</div>
-                    </td>
-                    <td class="p-4">
-                        <div class="font-mono text-slate-700 font-semibold">${t.ic}</div>
-                        <div class="text-xs text-slate-500 flex items-center space-x-2 mt-1">
-                            <span>Pass:</span>
-                            <span id="pass-display-${t.id}" class="font-mono font-bold text-slate-800">••••••••</span>
-                            <button onclick="toggleTeacherPasswordDisplay('${t.id}', '${t.pass}')" class="text-brand-600 hover:text-brand-800 text-xs p-1">
-                                <i id="pass-icon-${t.id}" class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </td>
-                    <td class="p-4">
-                        <div class="flex flex-wrap gap-1">
-                            ${t.subjects.map(s => `<span class="bg-brand-50 text-brand-700 text-xs px-2 py-0.5 rounded-md font-semibold">${s}</span>`).join('')}
-                        </div>
-                    </td>
-                    <td class="p-4 font-bold text-slate-800">
-                        ${t.teachingSlots} Waktu
-                    </td>
-                    <td class="p-4 text-center">
-                        <div class="flex items-center justify-center space-x-2">
-                            <button onclick="openTeacherModal('${t.id}')" class="p-2 text-brand-600 hover:bg-brand-50 rounded-lg"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteTeacher('${t.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            return list.map(t => {
+                const hakikiYear = getTeacherHakikiSlotsForYear(t, store.selectedYear);
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800">${t.name}</div>
+                            <div class="text-xs text-slate-400">${t.position || 'Guru'} | Emel: ${t.email}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-mono text-slate-700 font-semibold">${t.ic}</div>
+                            <div class="text-xs text-slate-500 flex items-center space-x-2 mt-1">
+                                <span>Pass:</span>
+                                <span id="pass-display-${t.id}" class="font-mono font-bold text-slate-800">••••••••</span>
+                                <button onclick="toggleTeacherPasswordDisplay('${t.id}', '${t.pass}')" class="text-brand-600 hover:text-brand-800 text-xs p-1">
+                                    <i id="pass-icon-${t.id}" class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex flex-wrap gap-1">
+                                ${t.subjects.map(s => `<span class="bg-brand-50 text-brand-700 text-xs px-2 py-0.5 rounded-md font-semibold">${s}</span>`).join('')}
+                            </div>
+                        </td>
+                        <td class="p-4 font-bold text-slate-800">
+                            ${hakikiYear} Waktu
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="openTeacherModal('${t.id}')" class="p-2 text-brand-600 hover:bg-brand-50 rounded-lg"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteTeacher('${t.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
         function toggleTeacherPasswordDisplay(teacherId, realPass) {
             const displayEl = document.getElementById(`pass-display-${teacherId}`);
@@ -2093,7 +2197,7 @@
         }
         function renderTimetableManagement() {
             const days = ["Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"];
-            const currentTimetable = store.timetable.filter(tt => (tt.year || 2026) === store.selectedYear);
+            const currentTimetable = store.timetable.filter(tt => Number(tt.year || 2026) === Number(store.selectedYear));
             return `
                 <div class="space-y-6">
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
@@ -2208,8 +2312,8 @@
                         const [teacherName, day, slot, subject, className] = cols.map(c => c.trim());
                         
                         if (store.enableClashDetection) {
-                            const isClassClash = store.timetable.some(tt => (tt.year || 2026) === store.selectedYear && tt.day === day && tt.slot === slot && tt.className === className);
-                            const isTeacherClash = store.timetable.some(tt => (tt.year || 2026) === store.selectedYear && tt.day === day && tt.slot === slot && tt.teacherName === teacherName);
+                            const isClassClash = store.timetable.some(tt => Number(tt.year || 2026) === Number(store.selectedYear) && tt.day === day && tt.slot === slot && tt.className === className);
+                            const isTeacherClash = store.timetable.some(tt => Number(tt.year || 2026) === Number(store.selectedYear) && tt.day === day && tt.slot === slot && tt.teacherName === teacherName);
                             
                             if (isClassClash || isTeacherClash) {
                                 errorCount++;
@@ -2326,7 +2430,7 @@
                             <div>
                                 <label class="block font-semibold mb-1">Pilih Guru *</label>
                                 <select id="tt-teacher" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                    ${store.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}
+                                    ${store.teachers.map(t => `<option value="${t.name}" ${store.currentUser?.role === 'teacher' && store.currentUser.data.name === t.name ? 'selected' : ''}>${t.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
@@ -2381,7 +2485,7 @@
             
             if (store.enableClashDetection) {
                 const isClassClash = store.timetable.some(tt => 
-                    (tt.year || 2026) === store.selectedYear &&
+                    Number(tt.year || 2026) === Number(store.selectedYear) &&
                     tt.day === day && 
                     tt.slot === slot && 
                     tt.className === className
@@ -2391,7 +2495,7 @@
                     return;
                 }
                 const isTeacherClash = store.timetable.some(tt => 
-                    (tt.year || 2026) === store.selectedYear &&
+                    Number(tt.year || 2026) === Number(store.selectedYear) &&
                     tt.day === day && 
                     tt.slot === slot && 
                     tt.teacherName === teacherName
@@ -2423,7 +2527,7 @@
         
         // ABSENCE MANAGEMENT
         function renderAbsenceManagement() {
-            const yearAbsences = store.absences.filter(a => (a.year || 2026) === store.selectedYear);
+            const yearAbsences = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(store.selectedYear));
             const selectedAbsenceList = yearAbsences.filter(a => a.date === store.absentFilterDate);
             return `
                 <div class="space-y-6">
@@ -2519,17 +2623,18 @@
             const teacher = store.teachers.find(t => t.id === teacherId);
             const date = document.getElementById('abs-date').value;
             const reason = document.getElementById('abs-reason').value;
+            const entryYear = getYearFromDate(date);
             let absObj;
             if (absId && absId !== 'null') {
                 const abs = store.absences.find(a => a.id === absId);
                 if (abs) {
-                    Object.assign(abs, { teacherId, teacherName: teacher ? teacher.name : '', date, reason, year: store.selectedYear });
+                    Object.assign(abs, { teacherId, teacherName: teacher ? teacher.name : '', date, reason, year: entryYear });
                     absObj = abs;
                 }
             } else {
                 absObj = {
                     id: 'ABS-' + Date.now(),
-                    year: store.selectedYear,
+                    year: entryYear,
                     teacherId,
                     teacherName: teacher ? teacher.name : '',
                     date,
@@ -2556,35 +2661,37 @@
             });
         }
         function autoUpdateReliefFromAbsences(targetDate) {
+            const targetYear = getYearFromDate(targetDate);
+            const targetWeekId = detectWeekIdFromDate(targetDate);
             const dayName = getDayNameFromDate(targetDate);
-            const absentForDate = store.absences.filter(a => (a.year || 2026) === store.selectedYear && a.date === targetDate);
-            store.reliefList = store.reliefList.filter(r => !((r.year || 2026) === store.selectedYear && r.date === targetDate));
+            const absentForDate = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(targetYear) && a.date === targetDate);
+            store.reliefList = store.reliefList.filter(r => !(Number(r.year || getYearFromDate(r.date)) === Number(targetYear) && r.date === targetDate));
             if (absentForDate.length === 0) {
-                pushToBackend('syncReliefDate', { date: targetDate, year: store.selectedYear, reliefs: [] });
+                pushToBackend('syncReliefDate', { date: targetDate, year: targetYear, reliefs: [] });
                 return;
             }
             
             let updatedReliefs = [];
             absentForDate.forEach(abs => {
-                const teacherSlots = store.timetable.filter(tt => (tt.year || 2026) === store.selectedYear && tt.teacherName === abs.teacherName && tt.day === dayName);
+                const teacherSlots = store.timetable.filter(tt => Number(tt.year || 2026) === Number(targetYear) && tt.teacherName === abs.teacherName && tt.day === dayName);
                 teacherSlots.forEach(slotItem => {
                     const timeSlotObj = store.timeSlots.find(ts => ts.slot === slotItem.slot);
                     const slotTimeStr = timeSlotObj ? timeSlotObj.time : '08:00 - 08:30';
                     const availableTeachers = store.teachers.filter(t => 
                         t.name !== abs.teacherName && 
                         !absentForDate.some(a => a.teacherName === t.name) &&
-                        !store.timetable.some(tt => (tt.year || 2026) === store.selectedYear && tt.teacherName === t.name && tt.day === dayName && tt.slot === slotItem.slot)
+                        !store.timetable.some(tt => Number(tt.year || 2026) === Number(targetYear) && tt.teacherName === t.name && tt.day === dayName && tt.slot === slotItem.slot)
                     );
                     const substitute = availableTeachers.length > 0 
                         ? availableTeachers[Math.floor(Math.random() * availableTeachers.length)]
                         : store.teachers.find(t => t.name !== abs.teacherName) || { id: 'T99', name: 'Guru Bebas' };
                     updatedReliefs.push({
                         id: 'REL-' + Date.now() + Math.floor(Math.random() * 1000),
-                        year: store.selectedYear,
+                        year: targetYear,
                         absentTeacherId: abs.teacherId,
                         absentTeacher: abs.teacherName,
                         date: targetDate,
-                        weekId: store.selectedWeekId,
+                        weekId: targetWeekId,
                         slot: slotItem.slot,
                         time: slotTimeStr,
                         subject: slotItem.subject,
@@ -2597,12 +2704,12 @@
                 });
             });
             store.reliefList = store.reliefList.concat(updatedReliefs);
-            pushToBackend('syncReliefDate', { date: targetDate, year: store.selectedYear, reliefs: updatedReliefs });
+            pushToBackend('syncReliefDate', { date: targetDate, year: targetYear, reliefs: updatedReliefs });
         }
         
         // 3.5 GURU GANTI 
         function renderReliefManagement() {
-            const yearReliefs = store.reliefList.filter(r => (r.year || 2026) === store.selectedYear && r.date === store.selectedReliefGenDate);
+            const yearReliefs = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && r.date === store.selectedReliefGenDate);
             const currentSchool = store.currentUser.data;
             return `
                 <div class="space-y-6">
@@ -2616,7 +2723,7 @@
                         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs font-bold text-slate-700">Pilih Tarikh:</span>
-                                <input type="date" id="relief-gen-date" value="${store.selectedReliefGenDate}" onchange="store.selectedReliefGenDate = this.value; renderApp();" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+                                <input type="date" id="relief-gen-date" value="${store.selectedReliefGenDate}" onchange="store.selectedReliefGenDate = this.value; store.selectedYear = getYearFromDate(this.value); renderApp();" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
                             </div>
                             <button onclick="autoGenerateReliefSchedule()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center space-x-2">
                                 <i class="fas fa-magic"></i>
@@ -2754,7 +2861,7 @@
         function autoGenerateReliefSchedule() {
             const dateStr = store.selectedReliefGenDate;
             autoUpdateReliefFromAbsences(dateStr);
-            const count = store.reliefList.filter(r => (r.year || 2026) === store.selectedYear && r.date === dateStr).length;
+            const count = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && r.date === dateStr).length;
             if (count === 0) {
                 showToast(`Tiada slot pengajaran guru tidak hadir dikesan pada tarikh ${dateStr}.`, "info");
             } else {
@@ -2812,19 +2919,21 @@
             window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
         }
         
-        // BEBANAN MASA MENGAJAR & WAKTU GANTI GURU
+        // ==========================================
+        // 2. ANALISIS BEBANAN MASA MENGAJAR & WAKTU GANTI GURU (SYNC TAHUN SEMASA)
+        // ==========================================
         function renderTeacherWorkloadSection() {
             const selectedWeekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
             return `
                 <div class="space-y-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-balance-scale text-brand-600 mr-2"></i>Analisis Bebanan Masa Mengajar & Waktu Ganti Guru</h3>
-                            <p class="text-xs text-slate-500">Analisis bebanan waktu mengajar guru mengikut minggu persekolahan (${store.selectedYear}).</p>
+                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-balance-scale text-brand-600 mr-2"></i>Analisis Bebanan Masa Mengajar & Waktu Ganti Guru (Tahun ${store.selectedYear})</h3>
+                            <p class="text-xs text-slate-500">Masa mengajar hakiki dan masa ganti disinkronkan secara langsung dengan Tahun <span class="font-bold text-brand-600">${store.selectedYear}</span>.</p>
                         </div>
                         <div class="flex items-center space-x-2">
                             <button onclick="toggleAllWeeksWorkloadView()" class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${store.viewAllWeeksWorkload ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
-                                <i class="fas fa-globe mr-1"></i> Keseluruhan
+                                <i class="fas fa-globe mr-1"></i> Keseluruhan (${store.selectedYear})
                             </button>
                             <span class="text-xs font-bold text-slate-600">Pilih Minggu:</span>
                             <select id="workload-week-select" onchange="changeWorkloadWeek(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-600" ${store.viewAllWeeksWorkload ? 'disabled' : ''}>
@@ -2841,26 +2950,27 @@
                             <thead class="bg-slate-50 border-b text-slate-500 text-xs uppercase font-bold">
                                 <tr>
                                     <th class="p-3">Nama Guru</th>
-                                    <th class="p-3">Bilangan Masa Mengajar Hakiki</th>
+                                    <th class="p-3">Masa Mengajar Hakiki (${store.selectedYear})</th>
                                     <th class="p-3">
-                                        ${store.viewAllWeeksWorkload ? 'Bilangan Masa Ganti (Keseluruhan Minggu)' : `Bilangan Masa Ganti (${selectedWeekObj.name})`}
+                                        ${store.viewAllWeeksWorkload ? `Masa Ganti (Keseluruhan ${store.selectedYear})` : `Masa Ganti (${selectedWeekObj.name} - ${store.selectedYear})`}
                                     </th>
-                                    <th class="p-3">Jumlah Bebanan Keseluruhan</th>
+                                    <th class="p-3">Jumlah Bebanan (${store.selectedYear})</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 ${store.teachers.map((t) => {
+                                    const hakikiCount = getTeacherHakikiSlotsForYear(t, store.selectedYear);
                                     const reliefCount = store.reliefList.filter(r => 
-                                        (r.year || 2026) === store.selectedYear &&
+                                        Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) &&
                                         r.substituteName === t.name && 
-                                        (store.viewAllWeeksWorkload || r.weekId === store.selectedWeekId)
+                                        (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
                                     ).length;
                                     return `
                                         <tr>
                                             <td class="p-3 font-bold text-slate-800">${t.name}</td>
-                                            <td class="p-3 font-semibold text-brand-600">${t.teachingSlots} Waktu</td>
+                                            <td class="p-3 font-semibold text-brand-600">${hakikiCount} Waktu</td>
                                             <td class="p-3 font-semibold text-amber-600">${reliefCount} Waktu</td>
-                                            <td class="p-3 font-extrabold text-slate-900">${t.teachingSlots + reliefCount} Waktu</td>
+                                            <td class="p-3 font-extrabold text-slate-900">${hakikiCount + reliefCount} Waktu</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -2873,21 +2983,21 @@
         function toggleAllWeeksWorkloadView() {
             store.viewAllWeeksWorkload = !store.viewAllWeeksWorkload;
             renderApp();
-            showToast(store.viewAllWeeksWorkload ? "Paparan bebanan ditukar kepada Keseluruhan Minggu" : `Paparan bebanan disinkronkan mengikut ${store.selectedWeekId}`);
+            showToast(store.viewAllWeeksWorkload ? `Paparan bebanan ditukar kepada Keseluruhan Tahun ${store.selectedYear}` : `Paparan bebanan disinkronkan mengikut ${store.selectedWeekId} (${store.selectedYear})`);
         }
         function changeWorkloadWeek(weekId) {
             store.selectedWeekId = weekId;
             store.viewAllWeeksWorkload = false;
             renderApp();
             const w = store.weeks.find(item => item.id === weekId);
-            showToast(`Melihat rekod bebanan guru untuk ${w ? w.name : weekId}`);
+            showToast(`Melihat rekod bebanan guru untuk ${w ? w.name : weekId} (${store.selectedYear})`);
         }
         
         // LAPORAN RASMI LANTIKAN GURU GANTI
         function renderReportTab() {
             const currentSchool = store.currentUser.data;
             const weekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
-            const filteredReliefList = store.reliefList.filter(r => (r.year || 2026) === store.selectedYear && (store.viewAllWeeksWorkload || r.weekId === store.selectedWeekId));
+            const filteredReliefList = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId));
             return `
                 <div class="space-y-6">
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
@@ -2982,7 +3092,9 @@
             });
         }
         
-        // 4. PAPARAN TETAPAN GURU (KEKALKAN SEMUA FUNGSI)
+        // ==========================================
+        // 3. PAPARAN GURU (BEBANAN MASA MENGAJAR SAYA SYNC MENGIKUT HARI SEMASA JADUAL WAKTU INDUK SEKOLAH)
+        // ==========================================
         function renderTeacherView() {
             const currentTeacher = store.currentUser.data;
             const days = ["Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"];
@@ -2990,34 +3102,44 @@
             
             const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
             
+            // Sync tahun semasa, minggu semasa & hari semasa
+            const activeYear = store.selectedYear;
+            const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
             const myDutyReliefs = store.reliefList.filter(r => 
-                (r.year || 2026) === store.selectedYear &&
+                Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
                 (r.substituteId === realTeacherObj.id || r.substituteName === realTeacherObj.name) &&
                 r.date === store.teacherDutyDate
             );
             
-            const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
-            
+            // Bilangan waktu ganti pada hari semasa (tarikh dipilih) dalam tahun semasa
             const reliefOnSelectedDay = store.reliefList.filter(r => 
-                (r.year || 2026) === store.selectedYear &&
+                Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
                 r.substituteName === realTeacherObj.name &&
                 r.date === store.teacherDutyDate
             ).length;
             
+            // Bilangan waktu ganti dalam minggu semasa & tahun semasa
             const currentReliefSlotsInWeek = store.reliefList.filter(r => 
-                (r.year || 2026) === store.selectedYear &&
+                Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
                 r.substituteName === realTeacherObj.name &&
-                r.weekId === store.selectedWeekId
+                (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId
             ).length;
             
-            const hakikiSlotsWeekly = realTeacherObj.teachingSlots || 0;
-            const hakikiSlotsDaily = Math.round(hakikiSlotsWeekly / 5);
+            // Masa mengajar hakiki mingguan & harian yang disinkron terus dari Jadual Waktu Induk Sekolah
+            const hakikiSlotsWeekly = getTeacherHakikiSlotsForYear(realTeacherObj, activeYear);
+            const hakikiSlotsDaily = getTeacherHakikiSlotsForDay(realTeacherObj, selectedDayName, activeYear);
+            const myTodayMasterSlots = store.timetable.filter(tt => 
+                Number(tt.year || 2026) === Number(activeYear) && 
+                tt.teacherName.trim().toLowerCase() === realTeacherObj.name.trim().toLowerCase() &&
+                tt.day === selectedDayName
+            );
+
             return `
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h2 class="text-xl font-extrabold text-slate-800">Selamat Datang, ${realTeacherObj.name}</h2>
-                            <p class="text-xs text-slate-500">ID IC: ${realTeacherObj.ic} | Subjek: ${realTeacherObj.subjects ? realTeacherObj.subjects.join(', ') : 'Guru'}</p>
+                            <p class="text-xs text-slate-500">ID IC: ${realTeacherObj.ic} | Subjek: ${realTeacherObj.subjects ? realTeacherObj.subjects.join(', ') : 'Guru'} | Tahun Semasa: <span class="font-bold text-brand-600">${activeYear}</span></p>
                         </div>
                         <button onclick="openTeacherSelfAbsenceModal()" class="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center space-x-2">
                             <i class="fas fa-user-times"></i><span>Isi Rekod Ketidakhadiran Saya</span>
@@ -3031,7 +3153,7 @@
                                 <h3 class="font-bold text-slate-800 text-base flex items-center">
                                     <i class="fas fa-user-clock text-amber-500 mr-2"></i>Tugas Guru Ganti Saya (Tarikh: ${store.teacherDutyDate} - ${selectedDayName})
                                 </h3>
-                                <p class="text-xs text-slate-500">Masa dan kelas yang perlu diganti oleh anda pada tarikh & hari ini.</p>
+                                <p class="text-xs text-slate-500">Masa dan kelas yang perlu diganti oleh anda pada tarikh & hari ini (${activeYear}).</p>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs font-bold text-slate-700">Pilihan Tarikh:</span>
@@ -3073,44 +3195,69 @@
                         </div>
                     </div>
                     
-                    <!-- BEBANAN MASA MENGAJAR SAYA (SINKRONI MENGIKUT HARI DAN MINGGU) -->
+                    <!-- BEBANAN MASA MENGAJAR SAYA (SYNC HARI SEMASA JADUAL WAKTU INDUK SEKOLAH) -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
                             <div>
                                 <h3 class="font-bold text-slate-800 text-sm flex items-center">
-                                    <i class="fas fa-balance-scale text-brand-500 mr-2"></i>Bebanan Masa Mengajar Saya (Disinkron mengikut Hari & Tarikh)
+                                    <i class="fas fa-balance-scale text-brand-500 mr-2"></i>Bebanan Masa Mengajar Saya (Sync Hari Semasa: ${selectedDayName})
                                 </h3>
-                                <p class="text-xs text-slate-500">Rekod waktu ganti dan hakiki disinkronkan mengikut hari pilihan (${selectedDayName}) serta minggu semasa (${weekObj.name}).</p>
+                                <p class="text-xs text-slate-500">Disinkronkan terus daripada <span class="font-bold text-slate-700">Jadual Waktu Induk Sekolah</span> bagi hari semasa (<span class="font-bold text-amber-700">${selectedDayName}, ${store.teacherDutyDate}</span>), Minggu Semasa (<span class="font-bold text-slate-700">${weekObj.name}</span>), dan Tahun (<span class="font-bold text-brand-600">${activeYear}</span>).</p>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <span class="text-xs font-semibold text-slate-500">Pilih Minggu:</span>
+                                <span class="text-xs font-semibold text-slate-500">Minggu Semasa:</span>
                                 <select onchange="changeWorkloadWeek(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-600">
                                     ${store.weeks.map(w => `<option value="${w.id}" ${store.selectedWeekId === w.id ? 'selected' : ''}>${w.name}</option>`).join('')}
                                 </select>
                             </div>
                         </div>
                         
-                        <!-- STATS WAKTU GANTI HARIAN & MINGGUAN -->
+                        <!-- STATS WAKTU GANTI HARIAN, MINGGUAN & TAHUNAN -->
                         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
                             <div class="p-4 bg-brand-50 border border-brand-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Hakiki (Mingguan)</p>
-                                <p class="text-2xl font-extrabold text-brand-700">${hakikiSlotsWeekly} Waktu</p>
+                                <p class="text-xs font-bold text-slate-500 uppercase">Hakiki Hari Ini (${selectedDayName})</p>
+                                <p class="text-2xl font-extrabold text-brand-700">${hakikiSlotsDaily} Waktu</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Jumlah Mingguan (${activeYear}): <span class="font-bold">${hakikiSlotsWeekly} Waktu</span></p>
                             </div>
                             <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti (Hari: ${selectedDayName})</p>
+                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti (${selectedDayName})</p>
                                 <p class="text-2xl font-extrabold text-amber-600">${reliefOnSelectedDay} Waktu</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Tarikh: ${store.teacherDutyDate}</p>
                             </div>
                             <div class="p-4 bg-purple-50 border border-purple-100 rounded-xl">
                                 <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti (${weekObj.name})</p>
                                 <p class="text-2xl font-extrabold text-purple-600">${currentReliefSlotsInWeek} Waktu</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Tahun ${activeYear}</p>
                             </div>
                             <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Bebanan Hari Ini</p>
+                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Bebanan (${selectedDayName})</p>
                                 <p class="text-2xl font-extrabold text-emerald-700">${hakikiSlotsDaily + reliefOnSelectedDay} Waktu</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Hakiki + Ganti Hari Ini</p>
                             </div>
                         </div>
+
+                        <!-- RINGKASAN SLOT MENGAJAR SAYA PADA HARI SEMASA DARI JADUAL INDUK -->
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <p class="text-xs font-bold text-slate-700 mb-2 flex items-center">
+                                <i class="fas fa-chalkboard text-brand-600 mr-1.5"></i>Slot Mengajar Hakiki Anda Pada Hari ${selectedDayName} (Jadual Waktu Induk Sekolah):
+                            </p>
+                            ${myTodayMasterSlots.length > 0 ? `
+                                <div class="flex flex-wrap gap-2">
+                                    ${myTodayMasterSlots.map(s => {
+                                        const tsObj = store.timeSlots.find(t => t.slot === s.slot);
+                                        return `
+                                            <span class="inline-flex items-center space-x-1.5 px-3 py-1 bg-white border border-brand-200 rounded-lg text-xs shadow-sm">
+                                                <span class="font-mono font-extrabold text-brand-700">${s.slot}</span>
+                                                <span class="text-slate-400 text-[10px]">(${tsObj ? tsObj.time : ''})</span>
+                                                <span class="font-bold text-slate-800">• ${s.className} (${s.subject})</span>
+                                            </span>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            ` : `<p class="text-xs text-slate-400 italic">Tiada slot mengajar hakiki direkodkan dalam Jadual Waktu Induk Sekolah untuk hari ${selectedDayName}.</p>`}
+                        </div>
                         
-                        <!-- CARTA BEBANAN GURU DISINKRON MENGIKUT HARI -->
+                        <!-- CARTA BEBANAN GURU DISINKRON MENGIKUT HARI, MINGGU & TAHUN -->
                         <div class="h-60">
                             <canvas id="singleTeacherWorkloadChart"></canvas>
                         </div>
@@ -3120,7 +3267,7 @@
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex justify-between items-center border-b pb-3">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-calendar-alt text-brand-600 mr-2"></i>Jadual Waktu Induk Sekolah (${store.selectedYear})</h3>
+                                <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-calendar-alt text-brand-600 mr-2"></i>Jadual Waktu Induk Sekolah (${activeYear})</h3>
                                 <p class="text-xs text-slate-500">${store.teacherCanEditSchedule ? 'Anda dibenarkan oleh Admin Sekolah untuk mengemaskini jadual.' : 'Mod Lihat Sahaja (Kebenaran Mengemaskini Ditolak oleh Admin).'}</p>
                             </div>
                             ${store.teacherCanEditSchedule ? `
@@ -3135,7 +3282,7 @@
                                 <thead>
                                     <tr class="bg-slate-100 border-b border-slate-200">
                                         <th class="p-3 border border-slate-200 text-slate-700 font-extrabold uppercase w-28">Masa / Hari</th>
-                                        ${days.map(day => `<th class="p-3 border border-slate-200 text-center font-extrabold ${day === selectedDayName ? 'bg-amber-100 text-amber-900 border-amber-300' : 'text-slate-800'}">${day} ${day === selectedDayName ? '★' : ''}</th>`).join('')}
+                                        ${days.map(day => `<th class="p-3 border border-slate-200 text-center font-extrabold ${day === selectedDayName ? 'bg-amber-100 text-amber-900 border-amber-300' : 'text-slate-800'}">${day} ${day === selectedDayName ? '★ (Hari Semasa)' : ''}</th>`).join('')}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3146,7 +3293,7 @@
                                                 <div class="text-[10px] text-slate-400">${slot.time}</div>
                                             </td>
                                             ${days.map(day => {
-                                                const matchEntries = store.timetable.filter(tt => (tt.year || 2026) === store.selectedYear && tt.day === day && tt.slot === slot.slot);
+                                                const matchEntries = store.timetable.filter(tt => Number(tt.year || 2026) === Number(activeYear) && tt.day === day && tt.slot === slot.slot);
                                                 const isTodayCol = day === selectedDayName;
                                                 return `
                                                     <td class="p-2 border border-slate-200 text-center align-top min-w-[140px] ${isTodayCol ? 'bg-amber-50/40' : 'bg-white'} hover:bg-slate-50 transition-colors">
@@ -3185,8 +3332,10 @@
         }
         function changeTeacherDutyDate(d) {
             store.teacherDutyDate = d;
+            store.selectedYear = getYearFromDate(d);
+            store.selectedWeekId = detectWeekIdFromDate(d);
             renderApp();
-            showToast(`Memaparkan kelas ganti anda untuk tarikh ${d} (${getDayNameFromDate(d)}).`);
+            showToast(`Disinkronkan: ${d} (${getDayNameFromDate(d)} | ${store.selectedWeekId} | Tahun ${store.selectedYear}).`);
         }
         function openTeacherSelfAbsenceModal() {
             const modalHtml = `
@@ -3199,7 +3348,7 @@
                         <form onsubmit="saveTeacherSelfAbsence(event)" class="space-y-4 text-sm">
                             <div>
                                 <label class="block font-semibold mb-1">Tarikh Ketidakhadiran *</label>
-                                <input type="date" id="t-abs-date" required value="${new Date().toISOString().split('T')[0]}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                <input type="date" id="t-abs-date" required value="${store.teacherDutyDate}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">Sebab Ketidakhadiran (Secara Bertulis) *</label>
@@ -3220,9 +3369,10 @@
             const currentTeacher = store.currentUser.data;
             const date = document.getElementById('t-abs-date').value;
             const reason = document.getElementById('t-abs-reason').value;
+            const entryYear = getYearFromDate(date);
             const absObj = {
                 id: 'ABS-' + Date.now(),
-                year: store.selectedYear,
+                year: entryYear,
                 teacherId: currentTeacher.id,
                 teacherName: currentTeacher.name,
                 date,
@@ -3246,10 +3396,19 @@
                     data: {
                         labels: store.teachers.map(t => t.name.split(' ')[0]),
                         datasets: [
-                            { label: 'Masa Mengajar Hakiki', data: store.teachers.map(t => t.teachingSlots), backgroundColor: '#0284c7', borderRadius: 6 },
                             { 
-                                label: store.viewAllWeeksWorkload ? 'Masa Ganti (Keseluruhan)' : 'Masa Ganti (Minggu)', 
-                                data: store.teachers.map(t => store.reliefList.filter(r => (r.year || 2026) === store.selectedYear && r.substituteName === t.name && (store.viewAllWeeksWorkload || r.weekId === store.selectedWeekId)).length), 
+                                label: `Masa Mengajar Hakiki (${store.selectedYear})`, 
+                                data: store.teachers.map(t => getTeacherHakikiSlotsForYear(t, store.selectedYear)), 
+                                backgroundColor: '#0284c7', 
+                                borderRadius: 6 
+                            },
+                            { 
+                                label: store.viewAllWeeksWorkload ? `Masa Ganti (Keseluruhan ${store.selectedYear})` : `Masa Ganti (${store.selectedWeekId} - ${store.selectedYear})`, 
+                                data: store.teachers.map(t => store.reliefList.filter(r => 
+                                    Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && 
+                                    r.substituteName === t.name && 
+                                    (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
+                                ).length), 
                                 backgroundColor: '#f59e0b', 
                                 borderRadius: 6 
                             }
@@ -3263,32 +3422,34 @@
                 const me = store.currentUser.data;
                 const realTeacherObj = store.teachers.find(t => t.id === me.id || t.name === me.name) || me;
                 const daysList = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat'];
+                const activeYear = store.selectedYear;
+                const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
                 
+                const hakikiPerDay = daysList.map(dayName => getTeacherHakikiSlotsForDay(realTeacherObj, dayName, activeYear));
                 const reliefPerDay = daysList.map(dayName => {
                     return store.reliefList.filter(r => 
-                        (r.year || 2026) === store.selectedYear &&
+                        Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
                         r.substituteName === realTeacherObj.name &&
-                        r.weekId === store.selectedWeekId &&
+                        (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId &&
                         getDayNameFromDate(r.date) === dayName
                     ).length;
                 });
-                
-                const avgHakikiPerDay = Math.round(realTeacherObj.teachingSlots / 5);
+
                 new Chart(stCanvas.getContext('2d'), {
                     type: 'bar',
                     data: {
-                        labels: daysList,
+                        labels: daysList.map(d => d === selectedDayName ? `${d} (Hari Semasa)` : d),
                         datasets: [
                             { 
-                                label: 'Waktu Hakiki (Anggaran)', 
-                                data: [avgHakikiPerDay, avgHakikiPerDay, avgHakikiPerDay, avgHakikiPerDay, avgHakikiPerDay], 
-                                backgroundColor: '#0284c7', 
+                                label: `Waktu Hakiki Jadual Induk (${activeYear})`, 
+                                data: hakikiPerDay, 
+                                backgroundColor: daysList.map(d => d === selectedDayName ? '#0369a1' : '#38bdf8'), 
                                 borderRadius: 6 
                             },
                             { 
-                                label: `Waktu Ganti (${store.selectedWeekId})`, 
+                                label: `Waktu Ganti (${store.selectedWeekId} - ${activeYear})`, 
                                 data: reliefPerDay, 
-                                backgroundColor: '#f59e0b', 
+                                backgroundColor: daysList.map(d => d === selectedDayName ? '#d97706' : '#fbbf24'), 
                                 borderRadius: 6 
                             }
                         ]
@@ -3301,9 +3462,7 @@
         // INITIAL STARTUP
         window.onload = function() {
             renderApp();
-            // Semak sambungan Google Apps Script secara automatik semasa aplikasi bermula
             checkAppsScriptConnection(true);
-            // Semakan berkala setiap 30 saat jika berada di paparan Super Admin
             setInterval(() => {
                 if (store.currentUser && store.currentUser.role === 'superadmin') {
                     checkAppsScriptConnection(true);
