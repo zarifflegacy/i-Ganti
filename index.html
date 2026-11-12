@@ -18,7 +18,7 @@
         // ==========================================
         // KONFIGURASI:
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbywVjM7bHIDzRTWkpL3UXsGjJOvh1ERCByvWpg0YYItW6iiH-8XvJzAoXFaYoLjIxljqQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzXDznwITDKX7rp1Ga5ljrEmjIPHRn8N4pPKvhzzB1pza6VcG6JX2h_1Bw-FEWG7OdO3Q/exec";
         
         tailwind.config = {
             theme: {
@@ -70,7 +70,6 @@
         <i id="toast-icon" class="fas fa-info-circle text-brand-500 text-lg"></i>
         <span id="toast-message" class="text-sm font-medium">Mesej Notifikasi</span>
     </div>
-
     <!-- MODAL CONFIRMATION DIALOG -->
     <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-95 opacity-0" id="confirm-modal-content">
@@ -85,7 +84,6 @@
             </div>
         </div>
     </div>
-
     <!-- MAIN APP SCRIPT LOGIC -->
     <script>
         // Mendapatkan tarikh semasa mengikut zon waktu tempatan
@@ -95,7 +93,6 @@
             const localDate = new Date(now.getTime() - (offset * 60 * 1000));
             return localDate.toISOString().split('T')[0];
         }
-
         const currentYearReal = new Date().getFullYear();
         const todayStr = getLocalTodayStr();
 
@@ -110,7 +107,7 @@
             // Toggle Pemeriksaan Pertembungan Kelas & Guru
             enableClashDetection: true,
             
-            // AppsScript Backend Connection Status (Auto-detected)
+            // AppsScript Backend Connection Status (Stabil: Sekali connected terus connected)
             isBackendConnected: false, 
             isCheckingBackend: false,
             lastCheckedBackend: null,
@@ -157,14 +154,14 @@
             },
             
             schools: [
-                { id: "SK001", name: "SK Seri Bintang", code: "WBA0001", email: "skseribintang@edu.my", phone: "60123456789", address: "Jalan Anjung Rahmat, Kuala Lumpur", adminName: "Encik Ahmad Razali", ic: "010203040506", pass: "123456", status: "aktif", daysLeft: 180, totalTeachers: 42 },
-                { id: "SK002", name: "SMK Taman Melawati", code: "BEA1072", email: "smktm@edu.my", phone: "60139876543", address: "Taman Melawati, Ampang, Selangor", adminName: "Puan Noraini Yusof", ic: "750512105432", pass: "123456", status: "aktif", daysLeft: 5, totalTeachers: 68 },
-                { id: "SK003", name: "SK Putrajaya Presint 9", code: "BBA8003", email: "skp9@edu.my", phone: "60171122334", address: "Presint 9, W.P Putrajaya", adminName: "Dr. Hamzah Kassim", ic: "720909086111", pass: "123456", status: "tidak_aktif", daysLeft: 0, totalTeachers: 35 }
+                { id: "SK001", year: 2026, name: "SK Seri Bintang", code: "WBA0001", email: "skseribintang@edu.my", phone: "60123456789", address: "Jalan Anjung Rahmat, Kuala Lumpur", adminName: "Encik Ahmad Razali", ic: "010203040506", pass: "123456", status: "aktif", daysLeft: 180, totalTeachers: 42 },
+                { id: "SK002", year: 2026, name: "SMK Taman Melawati", code: "BEA1072", email: "smktm@edu.my", phone: "60139876543", address: "Taman Melawati, Ampang, Selangor", adminName: "Puan Noraini Yusof", ic: "750512105432", pass: "123456", status: "aktif", daysLeft: 5, totalTeachers: 68 },
+                { id: "SK003", year: 2026, name: "SK Putrajaya Presint 9", code: "BBA8003", email: "skp9@edu.my", phone: "60171122334", address: "Presint 9, W.P Putrajaya", adminName: "Dr. Hamzah Kassim", ic: "720909086111", pass: "123456", status: "tidak_aktif", daysLeft: 0, totalTeachers: 35 }
             ],
             payments: [
-                { id: "PAY-1001", schoolCode: "WBA0001", schoolName: "SK Seri Bintang", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "sudah_bayar", fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-                { id: "PAY-1002", schoolCode: "BEA1072", schoolName: "SMK Taman Melawati", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "sudah_bayar", fileUrl: "" },
-                { id: "PAY-1003", schoolCode: "BBA8003", schoolName: "SK Putrajaya Presint 9", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "belum_bayar", fileUrl: "" }
+                { id: "PAY-1001", year: 2026, schoolCode: "WBA0001", schoolName: "SK Seri Bintang", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "sudah_bayar", fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
+                { id: "PAY-1002", year: 2026, schoolCode: "BEA1072", schoolName: "SMK Taman Melawati", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "sudah_bayar", fileUrl: "" },
+                { id: "PAY-1003", year: 2026, schoolCode: "BBA8003", schoolName: "SK Putrajaya Presint 9", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "belum_bayar", fileUrl: "" }
             ],
             
             teacherCanEditSchedule: true,
@@ -231,53 +228,116 @@
             const weekNum = Math.min(Math.max(Math.ceil((diffDays + 1) / 7), 1), store.weeks.length);
             return `W${weekNum}`;
         }
-
-        // Set minggu semasa secara automatik pada permulaan
         store.selectedWeekId = detectWeekIdFromDate(todayStr);
 
         // ==========================================
-        // FUNGSI PENGESANAN & PENYIMPANAN BACKEND APPSCRIPT
+        // LOCAL STORAGE PERSISTENCE (BACKUP & SYNC OFFLINE/ONLINE)
         // ==========================================
-        async function checkAppsScriptConnection(silent = false) {
-            store.isCheckingBackend = true;
-            if (!silent && store.currentUser?.role === 'superadmin') renderApp();
-            
+        function saveLocalBackup() {
+            try {
+                const snapshot = {
+                    availableYears: store.availableYears,
+                    selectedYear: store.selectedYear,
+                    schools: store.schools,
+                    payments: store.payments,
+                    teachers: store.teachers,
+                    classes: store.classes,
+                    timetable: store.timetable,
+                    absences: store.absences,
+                    reliefList: store.reliefList,
+                    subjects: store.subjects,
+                    timeSlots: store.timeSlots,
+                    weeks: store.weeks,
+                    bankInfo: store.bankInfo,
+                    appName: store.appName,
+                    appDesc: store.appDesc,
+                    appLogo: store.appLogo,
+                    superAdminAuth: store.superAdminAuth
+                };
+                localStorage.setItem('iganti_store_v2', JSON.stringify(snapshot));
+            } catch (e) {}
+        }
+
+        function loadLocalBackup() {
+            try {
+                const raw = localStorage.getItem('iganti_store_v2');
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (Array.isArray(saved.availableYears) && saved.availableYears.length > 0) store.availableYears = saved.availableYears;
+                if (saved.selectedYear) store.selectedYear = Number(saved.selectedYear);
+                if (Array.isArray(saved.schools)) store.schools = saved.schools;
+                if (Array.isArray(saved.payments)) store.payments = saved.payments;
+                if (Array.isArray(saved.teachers)) store.teachers = saved.teachers;
+                if (Array.isArray(saved.classes)) store.classes = saved.classes;
+                if (Array.isArray(saved.timetable)) store.timetable = saved.timetable;
+                if (Array.isArray(saved.absences)) store.absences = saved.absences;
+                if (Array.isArray(saved.reliefList)) store.reliefList = saved.reliefList;
+                if (Array.isArray(saved.subjects)) store.subjects = saved.subjects;
+                if (Array.isArray(saved.timeSlots)) store.timeSlots = saved.timeSlots;
+                if (Array.isArray(saved.weeks)) store.weeks = saved.weeks;
+                if (saved.bankInfo) store.bankInfo = saved.bankInfo;
+                if (saved.appName) store.appName = saved.appName;
+                if (saved.appDesc) store.appDesc = saved.appDesc;
+                if (saved.appLogo) store.appLogo = saved.appLogo;
+                if (saved.superAdminAuth) store.superAdminAuth = saved.superAdminAuth;
+            } catch (e) {}
+        }
+
+        // ==========================================
+        // FUNGSI PENGESANAN & PENYIMPANAN BACKEND APPSCRIPT (STABIL)
+        // ==========================================
+        async function checkAppsScriptConnection(silent = false, forceCheck = false) {
+            // Jika sudah connected dan bukan semakan paksa manual, kekalkan status connected supaya stabil
+            if (store.isBackendConnected && !forceCheck) {
+                return true;
+            }
+
             if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) {
                 store.isBackendConnected = false;
                 store.isCheckingBackend = false;
                 store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 if (store.currentUser?.role === 'superadmin') renderApp();
-                if (!silent) showToast("URL Apps Script belum dikonfigurasi (Terputus).", "error");
+                if (!silent) showToast("URL Apps Script belum dikonfigurasi pada API_URL.", "error");
                 return false;
             }
+
+            store.isCheckingBackend = true;
+            if (!silent && store.currentUser?.role === 'superadmin') renderApp();
+
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
                 const separator = API_URL.includes('?') ? '&' : '?';
-                const response = await fetch(`${API_URL}${separator}action=ping`, {
+                const response = await fetch(`${API_URL}${separator}action=ping&t=${Date.now()}`, {
                     method: 'GET',
+                    redirect: 'follow',
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
+
                 if (response.ok) {
-                    const data = await response.json();
+                    const text = await response.text();
+                    let data = null;
+                    try { data = JSON.parse(text); } catch (err) {}
+
                     if (data && (data.status === 'success' || data.connected === true)) {
                         store.isBackendConnected = true;
                         store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                        if (!silent) showToast("Berjaya disambungkan ke Google Sheet Apps Script!", "success");
                         if (data.data) {
                             syncStoreWithBackend(data.data);
-                            renderApp();
+                            saveLocalBackup();
                         }
-                    } else {
-                        store.isBackendConnected = false;
-                        if (!silent) showToast("Respon Apps Script tidak sah.", "error");
+                        if (!silent) showToast("Berjaya disambungkan ke Google Sheet Apps Script!", "success");
+                        renderApp();
+                        return true;
                     }
-                } else {
-                    store.isBackendConnected = false;
-                    if (!silent) showToast("Gagal menghubungi pelayan Google Apps Script.", "error");
                 }
+                if (!forceCheck && store.isBackendConnected) return true;
+                store.isBackendConnected = false;
+                if (!silent) showToast("Gagal menyambung ke Google Apps Script. Sila semak deployment Web App.", "error");
             } catch (error) {
+                // Sekali connected terus kekal connected kecuali semakan manual gagal
+                if (!forceCheck && store.isBackendConnected) return true;
                 store.isBackendConnected = false;
                 if (!silent) showToast("Sambungan ke Google Apps Script gagal / terputus.", "error");
             } finally {
@@ -290,9 +350,35 @@
 
         function syncStoreWithBackend(backendData) {
             if (!backendData) return;
-            if (Array.isArray(backendData.schools) && backendData.schools.length > 0) store.schools = backendData.schools;
-            if (Array.isArray(backendData.payments) && backendData.payments.length > 0) store.payments = backendData.payments;
-            if (Array.isArray(backendData.teachers) && backendData.teachers.length > 0) store.teachers = backendData.teachers;
+            if (Array.isArray(backendData.schools) && backendData.schools.length > 0) {
+                store.schools = backendData.schools.map(s => ({
+                    ...s,
+                    id: String(s.id || 'SK' + Date.now()),
+                    year: Number(s.year || 2026),
+                    ic: String(s.ic || '').trim(),
+                    pass: String(s.pass || '').trim(),
+                    code: String(s.code || '').trim(),
+                    daysLeft: Number(s.daysLeft || 0),
+                    totalTeachers: Number(s.totalTeachers || 0)
+                }));
+            }
+            if (Array.isArray(backendData.payments) && backendData.payments.length > 0) {
+                store.payments = backendData.payments.map(p => ({
+                    ...p,
+                    year: Number(p.year || getYearFromDate(p.startDate) || 2026),
+                    amount: Number(p.amount || 0)
+                }));
+            }
+            if (Array.isArray(backendData.teachers) && backendData.teachers.length > 0) {
+                store.teachers = backendData.teachers.map(t => ({
+                    ...t,
+                    id: String(t.id || 'T' + Date.now()),
+                    ic: String(t.ic || '').trim(),
+                    pass: String(t.pass || '').trim(),
+                    teachingSlots: Number(t.teachingSlots || 0),
+                    subjects: Array.isArray(t.subjects) ? t.subjects : (typeof t.subjects === 'string' && t.subjects ? t.subjects.split(',').map(x => x.trim()) : [])
+                }));
+            }
             if (Array.isArray(backendData.classes) && backendData.classes.length > 0) store.classes = backendData.classes;
             if (Array.isArray(backendData.timetable) && backendData.timetable.length > 0) store.timetable = backendData.timetable;
             if (Array.isArray(backendData.absences) && backendData.absences.length > 0) store.absences = backendData.absences;
@@ -300,6 +386,9 @@
             if (Array.isArray(backendData.subjects) && backendData.subjects.length > 0) store.subjects = backendData.subjects;
             if (Array.isArray(backendData.timeSlots) && backendData.timeSlots.length > 0) store.timeSlots = backendData.timeSlots;
             if (Array.isArray(backendData.weeks) && backendData.weeks.length > 0) store.weeks = backendData.weeks;
+            if (Array.isArray(backendData.availableYears) && backendData.availableYears.length > 0) {
+                store.availableYears = backendData.availableYears.map(Number).sort((a, b) => b - a);
+            }
             if (backendData.settings) {
                 if (backendData.settings.appName) store.appName = backendData.settings.appName;
                 if (backendData.settings.appDesc) store.appDesc = backendData.settings.appDesc;
@@ -308,28 +397,34 @@
                 if (backendData.settings.accountName) store.bankInfo.accountName = backendData.settings.accountName;
                 if (backendData.settings.accountNo) store.bankInfo.accountNo = backendData.settings.accountNo;
                 if (backendData.settings.qrCode) store.bankInfo.qrCode = backendData.settings.qrCode;
+                if (backendData.settings.saIc) store.superAdminAuth.ic = String(backendData.settings.saIc).trim();
+                if (backendData.settings.saPass) store.superAdminAuth.pass = String(backendData.settings.saPass).trim();
             }
         }
 
         async function pushToBackend(action, payload) {
+            saveLocalBackup();
             if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) return;
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
+                    redirect: 'follow',
                     headers: {
                         'Content-Type': 'text/plain;charset=utf-8'
                     },
                     body: JSON.stringify({ action, payload })
                 });
                 if (res.ok) {
-                    const result = await res.json();
+                    const text = await res.text();
+                    let result = null;
+                    try { result = JSON.parse(text); } catch (e) {}
                     if (result && result.status === 'success') {
                         store.isBackendConnected = true;
                         store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     }
                 }
             } catch (e) {
-                store.isBackendConnected = false;
+                // Tidak ubah status jika sudah connected agar paparan stabil
             }
         }
         
@@ -358,7 +453,7 @@
         }
         function getYearFromDate(dateString) {
             if (!dateString) return store.selectedYear;
-            return parseInt(dateString.split('-')[0], 10);
+            return parseInt(String(dateString).split('-')[0], 10);
         }
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
@@ -411,7 +506,7 @@
         }
 
         // ==========================================
-        // HELPER PENGIRAAN MASA MENGAJAR HAKIKI & GANTI (SYNC JADUAL WAKTU INDUK SEKOLAH)
+        // HELPER PENGIRAAN MASA MENGAJAR HAKIKI & GANTI
         // ==========================================
         function getTeacherHakikiSlotsForYear(teacherObj, year) {
             const timetableEntries = store.timetable.filter(tt => 
@@ -423,21 +518,14 @@
             }
             return Number(year) === 2026 ? (Number(teacherObj.teachingSlots) || 0) : 0;
         }
-
-        // Mengira secara tepat bilangan slot guru dalam Jadual Waktu Induk Sekolah pada hari semasa
         function getTeacherHakikiSlotsForDay(teacherObj, dayName, year) {
             const yearTimetable = store.timetable.filter(tt => 
                 Number(tt.year || 2026) === Number(year) && 
                 tt.teacherName.trim().toLowerCase() === teacherObj.name.trim().toLowerCase()
             );
-
-            // Jika guru mempunyai rekod dalam Jadual Waktu Induk Sekolah untuk tahun tersebut,
-            // pulangkan jumlah sebenar slot pada hari berkenaan (termasuk 0 jika hari itu tiada kelas)
             if (yearTimetable.length > 0) {
                 return yearTimetable.filter(tt => tt.day === dayName).length;
             }
-
-            // Fallback hanya jika Jadual Waktu Induk Sekolah belum diisi langsung bagi guru tersebut
             const totalYearHakiki = getTeacherHakikiSlotsForYear(teacherObj, year);
             if (totalYearHakiki > 0 && ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat'].includes(dayName)) {
                 return Math.round(totalYearHakiki / 5);
@@ -450,7 +538,6 @@
             store.currentUser = { role, data: userData };
             store.activeTab = 'dashboard';
             if (role === 'teacher') {
-                // Sentiasa mulakan dengan tarikh dan hari semasa apabila guru log masuk
                 const currentToday = getLocalTodayStr();
                 store.teacherDutyDate = currentToday;
                 store.selectedYear = getYearFromDate(currentToday);
@@ -458,7 +545,7 @@
             }
             renderApp();
             if (role === 'superadmin') {
-                checkAppsScriptConnection(true);
+                checkAppsScriptConnection(true, false);
             }
             showToast(`Log masuk berjaya sebagai ${role.toUpperCase()}`, 'success');
         }
@@ -471,12 +558,9 @@
         function switchTab(tab) {
             store.activeTab = tab;
             renderApp();
-            if (store.currentUser?.role === 'superadmin' && tab === 'dashboard') {
-                checkAppsScriptConnection(true);
-            }
         }
         function changeYear(year) {
-            const parsedYear = parseInt(year);
+            const parsedYear = parseInt(year, 10);
             store.selectedYear = parsedYear;
             
             const syncDateWithYear = (dStr) => {
@@ -489,21 +573,26 @@
             store.reliefFilterDate = syncDateWithYear(store.reliefFilterDate);
             store.selectedReliefGenDate = syncDateWithYear(store.selectedReliefGenDate);
             store.selectedWeekId = detectWeekIdFromDate(store.teacherDutyDate);
+            saveLocalBackup();
             renderApp();
             showToast(`Data disinkronkan ke Tahun ${store.selectedYear}`, 'info');
         }
         
-        // PENGURUSAN TAHUN DASHBOARD
+        // ==========================================
+        // PENGURUSAN TAHUN DASHBOARD (TAMBAH, EDIT & DELETE)
+        // ==========================================
         function openYearManagementModal() {
+            const existing = document.getElementById('year-mgmt-modal');
+            if (existing) existing.remove();
             const modalHtml = `
                 <div id="year-mgmt-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-slate-900 text-base"><i class="fas fa-calendar-alt text-brand-600 mr-2"></i>Pengurusan Pilihan Tahun Dashboard</h3>
+                            <h3 class="font-bold text-slate-900 text-base"><i class="fas fa-calendar-alt text-brand-600 mr-2"></i>Pengurusan Tahun Sistem</h3>
                             <button onclick="document.getElementById('year-mgmt-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4 flex space-x-2">
-                            <input type="number" id="new-year-input" placeholder="Tahun baru (e.g. 2027)" class="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold">
+                            <input type="number" id="new-year-input" placeholder="Tahun baru (cth: 2027)" class="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold">
                             <button onclick="addNewYearItem()" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs">Tambah</button>
                         </div>
                         <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -523,24 +612,44 @@
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
         function addNewYearItem() {
-            const val = parseInt(document.getElementById('new-year-input').value);
-            if (val && !store.availableYears.includes(val)) {
-                store.availableYears.push(val);
-                store.availableYears.sort((a, b) => b - a);
-                showToast(`Tahun ${val} berjaya ditambah!`, 'success');
-                document.getElementById('year-mgmt-modal').remove();
-                openYearManagementModal();
-                renderApp();
+            const val = parseInt(document.getElementById('new-year-input').value, 10);
+            if (!val || val < 2000 || val > 2100) {
+                showToast("Sila masukkan tahun yang sah!", "error");
+                return;
             }
+            if (store.availableYears.includes(val)) {
+                showToast(`Tahun ${val} sudah wujud dalam senarai.`, "error");
+                return;
+            }
+            store.availableYears.push(val);
+            store.availableYears.sort((a, b) => b - a);
+            pushToBackend('saveYears', { availableYears: store.availableYears });
+            showToast(`Tahun ${val} berjaya ditambah!`, 'success');
+            document.getElementById('year-mgmt-modal').remove();
+            openYearManagementModal();
+            renderApp();
         }
         function updateYearItem(index) {
-            const newVal = parseInt(document.getElementById(`year-edit-${index}`).value);
-            if (newVal) {
-                store.availableYears[index] = newVal;
-                store.availableYears.sort((a, b) => b - a);
-                showToast(`Tahun dikemaskini ke ${newVal}`, 'success');
-                renderApp();
+            const oldVal = store.availableYears[index];
+            const newVal = parseInt(document.getElementById(`year-edit-${index}`).value, 10);
+            if (!newVal || newVal < 2000 || newVal > 2100) {
+                showToast("Sila masukkan tahun yang sah!", "error");
+                return;
             }
+            if (newVal !== oldVal && store.availableYears.includes(newVal)) {
+                showToast(`Tahun ${newVal} sudah wujud!`, "error");
+                return;
+            }
+            store.availableYears[index] = newVal;
+            store.availableYears.sort((a, b) => b - a);
+            if (store.selectedYear === oldVal) {
+                store.selectedYear = newVal;
+            }
+            pushToBackend('saveYears', { availableYears: store.availableYears });
+            showToast(`Tahun dikemaskini dari ${oldVal} ke ${newVal}`, 'success');
+            document.getElementById('year-mgmt-modal').remove();
+            openYearManagementModal();
+            renderApp();
         }
         function deleteYearItem(index) {
             const yearVal = store.availableYears[index];
@@ -553,10 +662,12 @@
                 if (store.selectedYear === yearVal) {
                     store.selectedYear = store.availableYears[0];
                 }
-                document.getElementById('year-mgmt-modal').remove();
+                pushToBackend('saveYears', { availableYears: store.availableYears });
+                const modal = document.getElementById('year-mgmt-modal');
+                if (modal) modal.remove();
                 openYearManagementModal();
                 renderApp();
-                showToast("Tahun berjaya dipadam.", "success");
+                showToast(`Tahun ${yearVal} berjaya dipadam.`, "success");
             });
         }
         
@@ -605,13 +716,18 @@
                                 <span class="text-xs text-brand-600 font-semibold tracking-wide uppercase">${roleLabels[store.currentUser.role]}</span>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center space-x-1 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-1.5 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                                 <i class="fas fa-calendar-check text-brand-600 text-xs"></i>
                                 <span class="text-xs font-bold text-slate-600">Tahun:</span>
                                 <select onchange="changeYear(this.value)" class="bg-transparent text-xs font-extrabold text-brand-700 focus:outline-none cursor-pointer">
-                                    ${store.availableYears.map(y => `<option value="${y}" ${store.selectedYear === y ? 'selected' : ''}>${y}</option>`).join('')}
+                                    ${store.availableYears.map(y => `<option value="${y}" ${Number(store.selectedYear) === Number(y) ? 'selected' : ''}>${y}</option>`).join('')}
                                 </select>
+                                ${store.currentUser.role === 'superadmin' ? `
+                                    <button onclick="openYearManagementModal()" class="ml-1 px-1.5 py-0.5 bg-brand-600 hover:bg-brand-700 text-white rounded text-[10px] font-bold transition-colors" title="Tambah / Edit / Padam Tahun">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                ` : ''}
                             </div>
                             <span class="hidden md:inline-block text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
                                 <i class="far fa-calendar-alt text-brand-500 mr-2"></i>${getRealFormattedDate()}
@@ -656,12 +772,12 @@
                             <form onsubmit="handleLoginSubmit(event)" class="space-y-5">
                                 <input type="hidden" id="login-role" value="school">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">No. Kad Pengenalan (ID)</label>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">No. Kad Pengenalan / Kod Sekolah (ID)</label>
                                     <div class="relative">
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                             <i class="fas fa-id-card"></i>
                                         </div>
-                                        <input type="text" id="login-id" required placeholder="010203040506" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                                        <input type="text" id="login-id" required placeholder="010203040506 atau WBA0001" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
                                     </div>
                                 </div>
                                 <div>
@@ -676,7 +792,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <button type="submit" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-500/30 transition-all text-sm">
+                                <button type="submit" id="login-submit-btn" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-500/30 transition-all text-sm">
                                     Log Masuk
                                 </button>
                             </form>
@@ -745,7 +861,7 @@
             `;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
-        function handleSuperAdminAuth(e) {
+        async function handleSuperAdminAuth(e) {
             e.preventDefault();
             const ic = document.getElementById('sa-ic').value.trim();
             const pass = document.getElementById('sa-pass').value.trim();
@@ -756,24 +872,51 @@
                 showToast("No. Kad Pengenalan atau Password salah!", "error");
             }
         }
-        function handleLoginSubmit(e) {
+        async function handleLoginSubmit(e) {
             e.preventDefault();
             const role = document.getElementById('login-role').value;
-            const id = document.getElementById('login-id').value.trim();
+            const rawId = document.getElementById('login-id').value.trim();
+            const cleanId = rawId.replace(/[-\s]/g, '');
             const pass = document.getElementById('login-pass').value.trim();
+
+            const btn = document.getElementById('login-submit-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyemak Akaun...';
+            }
+
+            // Sinkron data terkini daripada backend jika API_URL aktif supaya sekolah/guru yang baru ditambah dapat log masuk
+            if (API_URL && API_URL !== "PASTE_APPS_SCRIPT_URL" && API_URL.startsWith("http")) {
+                await checkAppsScriptConnection(true, false);
+            }
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Log Masuk';
+            }
+
             if (role === 'school') {
-                const school = store.schools.find(s => (s.ic === id || s.code.toLowerCase() === id.toLowerCase()) && s.pass === pass);
+                const school = store.schools.find(s => {
+                    const sIc = String(s.ic || '').trim().replace(/[-\s]/g, '');
+                    const sCode = String(s.code || '').trim().toLowerCase();
+                    const sPass = String(s.pass || '').trim();
+                    return (sIc === cleanId || String(s.ic || '').trim() === rawId || sCode === rawId.toLowerCase()) && sPass === pass;
+                });
                 if (school) {
-                    if (school.status === 'tidak_aktif') {
+                    if (String(school.status).toLowerCase() === 'tidak_aktif') {
                         showToast("Akaun Sekolah Tidak Aktif. Sila hubungi Super Admin.", "error");
                         return;
                     }
                     setRole('school', school);
                 } else {
-                    showToast("No. Kad Pengenalan atau Password sekolah tidak tepat!", "error");
+                    showToast("No. Kad Pengenalan / Kod Sekolah atau Password tidak tepat!", "error");
                 }
             } else if (role === 'teacher') {
-                const teacher = store.teachers.find(t => t.ic === id && t.pass === pass);
+                const teacher = store.teachers.find(t => {
+                    const tIc = String(t.ic || '').trim().replace(/[-\s]/g, '');
+                    const tPass = String(t.pass || '').trim();
+                    return (tIc === cleanId || String(t.ic || '').trim() === rawId) && tPass === pass;
+                });
                 if (teacher) {
                     setRole('teacher', teacher);
                 } else {
@@ -782,25 +925,40 @@
             }
         }
         
-        // 2. PAPARAN TETAPAN SUPER ADMIN (KEKALKAN SEMUA FUNGSI)
+        // ==========================================
+        // 2. PAPARAN TETAPAN SUPER ADMIN (SYNC TAHUN & STATUS STABIL)
+        // ==========================================
+        function getSchoolsForSelectedYear() {
+            return store.schools.filter(s => Number(s.year || 2026) === Number(store.selectedYear));
+        }
+        function getPaymentsForSelectedYear() {
+            return store.payments.filter(p => Number(p.year || getYearFromDate(p.startDate) || 2026) === Number(store.selectedYear));
+        }
+
         function renderSuperAdminView() {
             return `
                 <div class="space-y-6">
-                    <div class="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto hide-scrollbar">
-                        <button onclick="switchTab('dashboard')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'dashboard' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
-                            <i class="fas fa-chart-pie mr-2"></i>Dashboard
-                        </button>
-                        <button onclick="switchTab('schools')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'schools' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
-                            <i class="fas fa-school mr-2"></i>Pengurusan Sekolah
-                        </button>
-                        <button onclick="switchTab('payments')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'payments' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
-                            <i class="fas fa-credit-card mr-2"></i>Pengurusan Pembayaran
-                        </button>
-                        <button onclick="switchTab('sa_account')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'sa_account' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
-                            <i class="fas fa-user-lock mr-2"></i>Tukar Login Super Admin
-                        </button>
-                        <button onclick="switchTab('app_settings')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'app_settings' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
-                            <i class="fas fa-cog mr-2"></i>Tetapan Logo & Aplikasi
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                        <div class="flex space-x-2 overflow-x-auto hide-scrollbar">
+                            <button onclick="switchTab('dashboard')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'dashboard' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                                <i class="fas fa-chart-pie mr-2"></i>Dashboard
+                            </button>
+                            <button onclick="switchTab('schools')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'schools' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                                <i class="fas fa-school mr-2"></i>Pengurusan Sekolah
+                            </button>
+                            <button onclick="switchTab('payments')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'payments' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                                <i class="fas fa-credit-card mr-2"></i>Pengurusan Pembayaran
+                            </button>
+                            <button onclick="switchTab('sa_account')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'sa_account' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                                <i class="fas fa-user-lock mr-2"></i>Tukar Login Super Admin
+                            </button>
+                            <button onclick="switchTab('app_settings')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'app_settings' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                                <i class="fas fa-cog mr-2"></i>Tetapan Logo & Aplikasi
+                            </button>
+                        </div>
+                        <button onclick="openYearManagementModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2 self-start sm:self-auto">
+                            <i class="fas fa-calendar-plus text-amber-400"></i>
+                            <span>Urus Tahun (${store.selectedYear})</span>
                         </button>
                     </div>
                     ${renderSuperAdminTabContent()}
@@ -810,12 +968,13 @@
         function sendSchoolReminderWhatsApp(schoolId) {
             const school = store.schools.find(s => s.id === schoolId);
             if (!school) return;
-            const pay = store.payments.find(p => p.schoolName === school.name);
+            const yearPayments = getPaymentsForSelectedYear();
+            const pay = yearPayments.find(p => p.schoolName === school.name || p.schoolCode === school.code);
             const statusBayaran = pay ? pay.status : 'belum_bayar';
             
             const msg = encodeURIComponent(
                 `Salam & Salam Sejahtera ${school.adminName} (${school.name}),\n\n` +
-                `Peringatan mesra daripada Super Admin i-Ganti:\n` +
+                `Peringatan mesra daripada Super Admin i-Ganti (Tahun ${store.selectedYear}):\n` +
                 `• Status Langganan: Baki ${school.daysLeft} hari lagi\n` +
                 `• Status Pembayaran: ${statusBayaran === 'sudah_bayar' ? 'SUDAH DIBAYAR' : 'PERLU DIJELASKAN'}\n\n` +
                 `Sila buat bayaran atau muat naik resit sekiranya berkenaan. Terima kasih!`
@@ -824,9 +983,10 @@
         }
         function renderSuperAdminTabContent() {
             if (store.activeTab === 'dashboard') {
-                const activeSchools = store.schools.filter(s => s.status === 'aktif');
-                const inactiveSchools = store.schools.filter(s => s.status === 'tidak_aktif');
-                const totalTeachers = store.schools.reduce((acc, s) => acc + s.totalTeachers, 0);
+                const yearSchools = getSchoolsForSelectedYear();
+                const activeSchools = yearSchools.filter(s => s.status === 'aktif');
+                const inactiveSchools = yearSchools.filter(s => s.status === 'tidak_aktif');
+                const totalTeachers = yearSchools.reduce((acc, s) => acc + (Number(s.totalTeachers) || 0), 0);
                 
                 const isConnected = store.isBackendConnected;
                 const cardBorderClass = isConnected ? 'border-emerald-200 bg-emerald-50/40' : 'border-red-200 bg-red-50/40';
@@ -846,38 +1006,55 @@
                                     <div class="flex items-center space-x-2">
                                         <h4 class="font-bold text-slate-800 text-sm">Status Sambungan Backend Appscript</h4>
                                         <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-full border uppercase tracking-wide ${badgeClass}">
-                                            ${store.isCheckingBackend ? 'Menyemak...' : (isConnected ? 'Tersambung (Hijau)' : 'Tidak Tersambung (Merah)')}
+                                            ${store.isCheckingBackend ? 'Menyemak...' : (isConnected ? 'Connected (Stabil)' : 'Disconnected')}
                                         </span>
                                     </div>
                                     <p class="text-xs text-slate-600 mt-0.5">
                                         Google Sheet Appscript Backend: 
                                         <span class="font-bold ${textColorClass}">
-                                            ${isConnected ? 'Connected - Pangkalan Data Google Sheet Aktif' : 'Disconnected - Sila semak API_URL atau kebenaran Web App'}
+                                            ${isConnected ? 'Connected - Pangkalan Data Google Sheet Aktif & Stabil' : 'Disconnected - Sila semak API_URL atau deployment Web App'}
                                         </span>
-                                        ${store.lastCheckedBackend ? `<span class="text-[11px] text-slate-400 ml-2">(Semakan terakhir: ${store.lastCheckedBackend})</span>` : ''}
+                                        ${store.lastCheckedBackend ? `<span class="text-[11px] text-slate-400 ml-2">(Disahkan: ${store.lastCheckedBackend})</span>` : ''}
                                     </p>
                                 </div>
                             </div>
-                            <button onclick="checkAppsScriptConnection(false)" ${store.isCheckingBackend ? 'disabled' : ''} class="px-3.5 py-2 text-xs font-bold rounded-xl border transition-all flex items-center justify-center space-x-2 shadow-sm ${isConnected ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' : 'bg-red-600 hover:bg-red-700 text-white border-red-600'}">
+                            <button onclick="checkAppsScriptConnection(false, true)" ${store.isCheckingBackend ? 'disabled' : ''} class="px-3.5 py-2 text-xs font-bold rounded-xl border transition-all flex items-center justify-center space-x-2 shadow-sm ${isConnected ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' : 'bg-red-600 hover:bg-red-700 text-white border-red-600'}">
                                 <i class="fas fa-sync-alt ${store.isCheckingBackend ? 'fa-spin' : ''}"></i>
                                 <span>${store.isCheckingBackend ? 'Menyemak Sambungan...' : 'Uji Sambungan Semula'}</span>
                             </button>
                         </div>
+
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div>
+                                <h3 class="font-extrabold text-slate-800 text-base">Ringkasan Data Super Admin (Tahun ${store.selectedYear})</h3>
+                                <p class="text-xs text-slate-500">Semua statistik sekolah, langganan dan pembayaran disinkronkan mengikut tahun pilihan.</p>
+                            </div>
+                            <div class="flex items-center space-x-2 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl">
+                                <span class="text-xs font-bold text-slate-700">Tahun Paparan:</span>
+                                <select onchange="changeYear(this.value)" class="bg-transparent font-extrabold text-xs text-brand-700 focus:outline-none cursor-pointer">
+                                    ${store.availableYears.map(y => `<option value="${y}" ${Number(store.selectedYear) === Number(y) ? 'selected' : ''}>${y}</option>`).join('')}
+                                </select>
+                                <button onclick="openYearManagementModal()" class="p-1 text-brand-700 hover:bg-brand-100 rounded-lg text-xs" title="Tambah / Edit / Padam Tahun">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Berdaftar</span>
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Berdaftar (${store.selectedYear})</span>
                                     <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-school"></i></div>
                                 </div>
-                                <div class="text-3xl font-extrabold text-slate-800 mb-2">${store.schools.length}</div>
+                                <div class="text-3xl font-extrabold text-slate-800 mb-2">${yearSchools.length}</div>
                                 <select class="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-medium text-slate-600">
-                                    <option>-- Senarai Sekolah Berdaftar --</option>
-                                    ${store.schools.map(s => `<option>${s.name} (${s.code})</option>`).join('')}
+                                    <option>-- Senarai Sekolah (${store.selectedYear}) --</option>
+                                    ${yearSchools.map(s => `<option>${s.name} (${s.code})</option>`).join('')}
                                 </select>
                             </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Aktif</span>
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Aktif (${store.selectedYear})</span>
                                     <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fas fa-check-circle"></i></div>
                                 </div>
                                 <div class="text-3xl font-extrabold text-slate-800 mb-2">${activeSchools.length}</div>
@@ -888,7 +1065,7 @@
                             </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Tidak Aktif</span>
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Tidak Aktif (${store.selectedYear})</span>
                                     <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-sm"><i class="fas fa-times-circle"></i></div>
                                 </div>
                                 <div class="text-3xl font-extrabold text-slate-800 mb-2">${inactiveSchools.length}</div>
@@ -899,24 +1076,24 @@
                             </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase">Jumlah Guru Berdaftar</span>
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Jumlah Guru (${store.selectedYear})</span>
                                     <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i class="fas fa-chalkboard-teacher"></i></div>
                                 </div>
                                 <div class="text-3xl font-extrabold text-slate-800 mb-1">${totalTeachers}</div>
-                                <p class="text-xs text-slate-400">Merangkumi seluruh sekolah</p>
+                                <p class="text-xs text-slate-400">Merangkumi sekolah tahun ${store.selectedYear}</p>
                             </div>
                         </div>
                         
                         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                             <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center">
-                                <i class="fas fa-clock text-amber-500 mr-2"></i> Status Langganan Countdown & Peringatan WhatsApp
+                                <i class="fas fa-clock text-amber-500 mr-2"></i> Status Langganan Countdown & Peringatan WhatsApp (Tahun ${store.selectedYear})
                             </h3>
                             <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                                ${store.schools.map(s => `
+                                ${yearSchools.length > 0 ? yearSchools.map(s => `
                                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
                                             <p class="font-bold text-sm text-slate-800">${s.name}</p>
-                                            <p class="text-xs text-slate-500">${s.code} | Tel: ${s.phone || 'Tiada'}</p>
+                                            <p class="text-xs text-slate-500">${s.code} | Tel: ${s.phone || 'Tiada'} | Tahun: ${s.year || store.selectedYear}</p>
                                         </div>
                                         <div class="flex items-center space-x-3">
                                             <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold ${s.daysLeft > 30 ? 'bg-emerald-100 text-emerald-700' : s.daysLeft > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}">
@@ -928,7 +1105,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                `).join('')}
+                                `).join('') : `<p class="text-xs text-slate-400 italic text-center py-6">Tiada sekolah berdaftar bagi Tahun ${store.selectedYear}.</p>`}
                             </div>
                         </div>
                     </div>
@@ -973,16 +1150,22 @@
             showToast("Kredential Super Admin berjaya dikemaskini!", "success");
         }
         function renderSchoolManagement() {
+            const yearSchools = getSchoolsForSelectedYear();
             return `
                 <div class="space-y-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                        <div class="relative w-full sm:w-80">
-                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-sm"></i>
-                            <input type="text" id="school-search" oninput="filterSchools()" placeholder="Cari nama atau kod sekolah..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                            <div class="relative w-full sm:w-72">
+                                <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-sm"></i>
+                                <input type="text" id="school-search" oninput="filterSchools()" placeholder="Cari nama atau kod sekolah (${store.selectedYear})..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            </div>
+                            <span class="text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 px-3 py-2 rounded-xl">
+                                Tahun: ${store.selectedYear} (${yearSchools.length} Sekolah)
+                            </span>
                         </div>
                         <button onclick="openAddSchoolModal()" class="w-full sm:w-auto px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2">
                             <i class="fas fa-plus"></i>
-                            <span>Tambah Sekolah Baru</span>
+                            <span>Tambah Sekolah Baru (${store.selectedYear})</span>
                         </button>
                     </div>
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -992,13 +1175,13 @@
                                     <tr>
                                         <th class="p-4">Maklumat Sekolah</th>
                                         <th class="p-4">No. Telefon & WhatsApp</th>
-                                        <th class="p-4">Pentadbir</th>
+                                        <th class="p-4">Pentadbir & ID Login</th>
                                         <th class="p-4">Status & Countdown</th>
                                         <th class="p-4 text-center">Tindakan</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="school-list-body">
-                                    ${renderSchoolRows(store.schools)}
+                                    ${renderSchoolRows(yearSchools)}
                                 </tbody>
                             </table>
                         </div>
@@ -1007,11 +1190,14 @@
             `;
         }
         function renderSchoolRows(schoolsList) {
+            if (!schoolsList || schoolsList.length === 0) {
+                return `<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">Tiada sekolah berdaftar bagi Tahun ${store.selectedYear}.</td></tr>`;
+            }
             return schoolsList.map(s => `
                 <tr class="hover:bg-slate-50/80 transition-colors">
                     <td class="p-4">
                         <div class="font-bold text-slate-800">${s.name}</div>
-                        <div class="text-xs text-slate-500">Kod: <span class="font-mono font-bold">${s.code}</span> | ${s.email}</div>
+                        <div class="text-xs text-slate-500">Kod: <span class="font-mono font-bold">${s.code}</span> | Tahun: <span class="font-bold text-brand-600">${s.year || store.selectedYear}</span></div>
                     </td>
                     <td class="p-4">
                         <div class="flex items-center space-x-2">
@@ -1023,7 +1209,7 @@
                     </td>
                     <td class="p-4">
                         <div class="font-semibold text-slate-700">${s.adminName}</div>
-                        <div class="text-xs text-slate-500">IC: ${s.ic}</div>
+                        <div class="text-xs text-slate-500">IC Login: <span class="font-mono font-bold text-slate-700">${s.ic}</span> | Pass: <span class="font-mono">${s.pass}</span></div>
                     </td>
                     <td class="p-4">
                         <div class="flex items-center space-x-2">
@@ -1050,7 +1236,8 @@
         }
         function filterSchools() {
             const query = document.getElementById('school-search').value.toLowerCase();
-            const filtered = store.schools.filter(s => s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query));
+            const yearSchools = getSchoolsForSelectedYear();
+            const filtered = yearSchools.filter(s => s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query));
             document.getElementById('school-list-body').innerHTML = renderSchoolRows(filtered);
         }
         function deleteSchool(id) {
@@ -1072,9 +1259,17 @@
                             <button onclick="document.getElementById('school-form-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
                         <form onsubmit="saveSchoolForm(event, '${schoolId}')" class="space-y-4 text-sm">
-                            <div>
-                                <label class="block font-semibold mb-1">Nama Sekolah *</label>
-                                <input type="text" id="m-school-name" required value="${school ? school.name : ''}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="col-span-2">
+                                    <label class="block font-semibold mb-1">Nama Sekolah *</label>
+                                    <input type="text" id="m-school-name" required value="${school ? school.name : ''}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1">Tahun *</label>
+                                    <select id="m-school-year" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-brand-700">
+                                        ${store.availableYears.map(y => `<option value="${y}" ${(school ? Number(school.year || 2026) : Number(store.selectedYear)) === Number(y) ? 'selected' : ''}>${y}</option>`).join('')}
+                                    </select>
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -1100,7 +1295,7 @@
                                     <input type="text" id="m-admin-name" required value="${school ? school.adminName : ''}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                                 </div>
                                 <div>
-                                    <label class="block font-semibold mb-1">No. IC Pentadbir *</label>
+                                    <label class="block font-semibold mb-1">No. IC Pentadbir (ID Login) *</label>
                                     <input type="text" id="m-admin-ic" required value="${school ? school.ic : ''}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                                 </div>
                             </div>
@@ -1117,7 +1312,7 @@
                                 <div>
                                     <label class="block font-semibold mb-1">Status Aktif *</label>
                                     <select id="m-school-status" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
-                                        <option value="aktif" ${school && school.status === 'aktif' ? 'selected' : ''}>Aktif</option>
+                                        <option value="aktif" ${!school || school.status === 'aktif' ? 'selected' : ''}>Aktif</option>
                                         <option value="tidak_aktif" ${school && school.status === 'tidak_aktif' ? 'selected' : ''}>Tidak Aktif</option>
                                     </select>
                                 </div>
@@ -1141,37 +1336,39 @@
         }
         function saveSchoolForm(e, schoolId) {
             e.preventDefault();
-            const name = document.getElementById('m-school-name').value;
-            const code = document.getElementById('m-school-code').value;
-            const phone = document.getElementById('m-school-phone').value;
-            const email = document.getElementById('m-school-email').value;
-            const address = document.getElementById('m-school-address').value;
-            const adminName = document.getElementById('m-admin-name').value;
-            const ic = document.getElementById('m-admin-ic').value;
-            const pass = document.getElementById('m-admin-pass').value;
+            const name = document.getElementById('m-school-name').value.trim();
+            const year = parseInt(document.getElementById('m-school-year').value, 10) || store.selectedYear;
+            const code = document.getElementById('m-school-code').value.trim();
+            const phone = document.getElementById('m-school-phone').value.trim();
+            const email = document.getElementById('m-school-email').value.trim();
+            const address = document.getElementById('m-school-address').value.trim();
+            const adminName = document.getElementById('m-admin-name').value.trim();
+            const ic = document.getElementById('m-admin-ic').value.trim();
+            const pass = document.getElementById('m-admin-pass').value.trim();
             const status = document.getElementById('m-school-status').value;
-            const daysLeft = parseInt(document.getElementById('m-school-days').value) || 0;
+            const daysLeft = parseInt(document.getElementById('m-school-days').value, 10) || 0;
             let payloadObj;
             if (schoolId && schoolId !== 'null') {
                 const school = store.schools.find(s => s.id === schoolId);
                 if (school) {
-                    Object.assign(school, { name, code, phone, email, address, adminName, ic, pass, status, daysLeft });
+                    Object.assign(school, { name, year, code, phone, email, address, adminName, ic, pass, status, daysLeft });
                     payloadObj = school;
                 }
             } else {
                 payloadObj = {
                     id: 'SK' + Date.now(),
-                    name, code, phone, email, address, adminName, ic, pass, status, daysLeft, totalTeachers: 0
+                    year, name, code, phone, email, address, adminName, ic, pass, status, daysLeft, totalTeachers: 0
                 };
                 store.schools.push(payloadObj);
             }
             pushToBackend('saveSchool', payloadObj);
             document.getElementById('school-form-modal').remove();
             renderApp();
-            showToast("Data sekolah berjaya dikemas kini!", "success");
+            showToast("Data sekolah berjaya disimpan & sedia untuk log masuk!", "success");
         }
         function renderPaymentManagement() {
-            const totalRevenue = store.payments.filter(p => p.status === 'sudah_bayar').reduce((a, b) => a + b.amount, 0);
+            const yearPayments = getPaymentsForSelectedYear();
+            const totalRevenue = yearPayments.filter(p => p.status === 'sudah_bayar').reduce((a, b) => a + b.amount, 0);
             const qrParsed = parseGoogleDriveUrl(store.bankInfo.qrCode);
             return `
                 <div class="space-y-6">
@@ -1209,28 +1406,31 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Keseluruhan Kutipan Pembayaran</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Kutipan Pembayaran (${store.selectedYear})</span>
                             <div class="text-3xl font-extrabold text-emerald-600 mt-2">RM ${totalRevenue.toFixed(2)}</div>
                         </div>
                         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Sudah Bayar</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Sudah Bayar (${store.selectedYear})</span>
                             <div class="text-3xl font-extrabold text-slate-800 mt-2">
-                                ${store.payments.filter(p => p.status === 'sudah_bayar').length}
+                                ${yearPayments.filter(p => p.status === 'sudah_bayar').length}
                             </div>
                         </div>
                         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Belum Bayar</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Sekolah Belum Bayar (${store.selectedYear})</span>
                             <div class="text-3xl font-extrabold text-amber-600 mt-2">
-                                ${store.payments.filter(p => p.status === 'belum_bayar').length}
+                                ${yearPayments.filter(p => p.status === 'belum_bayar').length}
                             </div>
                         </div>
                     </div>
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6" id="receipts-container">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800">Senarai Resit & Invois Langganan Sekolah</h3>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800">Senarai Resit & Invois Langganan Sekolah (Tahun ${store.selectedYear})</h3>
+                                <p class="text-xs text-slate-500">Rekod pembayaran disinkronkan mengikut tahun pilihan.</p>
+                            </div>
                             <div class="flex space-x-2">
                                 <button onclick="openAddReceiptModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm transition-all flex items-center space-x-2 no-print">
-                                    <i class="fas fa-plus"></i><span>Keluarkan Resit Bayaran</span>
+                                    <i class="fas fa-plus"></i><span>Keluarkan Resit Bayaran (${store.selectedYear})</span>
                                 </button>
                             </div>
                         </div>
@@ -1248,7 +1448,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    ${store.payments.map(p => `
+                                    ${yearPayments.length > 0 ? yearPayments.map(p => `
                                         <tr>
                                             <td class="p-3 font-mono font-bold text-slate-700">${p.id}</td>
                                             <td class="p-3 font-semibold text-slate-800">${p.schoolName}</td>
@@ -1271,7 +1471,11 @@
                                                 </button>
                                             </td>
                                         </tr>
-                                    `).join('')}
+                                    `).join('') : `
+                                        <tr>
+                                            <td colspan="7" class="p-6 text-center text-xs text-slate-400 italic">Tiada rekod pembayaran bagi Tahun ${store.selectedYear}.</td>
+                                        </tr>
+                                    `}
                                 </tbody>
                             </table>
                         </div>
@@ -1308,6 +1512,8 @@
         function openAddReceiptModal(payId = null) {
             const pay = payId ? store.payments.find(p => p.id === payId) : null;
             const isEdit = !!pay;
+            const yearSchools = getSchoolsForSelectedYear();
+            const schoolOptions = yearSchools.length > 0 ? yearSchools : store.schools;
             const modalHtml = `
                 <div id="receipt-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
@@ -1320,21 +1526,29 @@
                                 <label class="block font-semibold mb-1">Pilih Sekolah Berdaftar *</label>
                                 <select id="r-school-dropdown" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium">
                                     <option value="">-- Pilih Sekolah --</option>
-                                    ${store.schools.map(s => `<option value="${s.name}" ${pay && pay.schoolName === s.name ? 'selected' : ''}>${s.name} (${s.code})</option>`).join('')}
+                                    ${schoolOptions.map(s => `<option value="${s.name}" ${pay && pay.schoolName === s.name ? 'selected' : ''}>${s.name} (${s.code})</option>`).join('')}
                                 </select>
                             </div>
-                            <div>
-                                <label class="block font-semibold mb-1">Jumlah Perlu Dibayar (RM) *</label>
-                                <input type="number" step="0.01" id="r-amount" required value="${pay ? pay.amount : 650.00}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-semibold mb-1">Tahun Langganan *</label>
+                                    <select id="r-year" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-brand-700">
+                                        ${store.availableYears.map(y => `<option value="${y}" ${(pay ? Number(pay.year) : Number(store.selectedYear)) === Number(y) ? 'selected' : ''}>${y}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1">Jumlah (RM) *</label>
+                                    <input type="number" step="0.01" id="r-amount" required value="${pay ? pay.amount : 650.00}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block font-semibold mb-1">Tarikh Mula *</label>
-                                    <input type="date" id="r-start" required value="${pay ? pay.startDate : '2026-01-01'}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <input type="date" id="r-start" required value="${pay ? pay.startDate : `${store.selectedYear}-01-01`}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                                 </div>
                                 <div>
                                     <label class="block font-semibold mb-1">Tarikh Akhir (Tempoh) *</label>
-                                    <input type="date" id="r-end" required value="${pay ? pay.endDate : '2026-12-31'}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <input type="date" id="r-end" required value="${pay ? pay.endDate : `${store.selectedYear}-12-31`}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                                 </div>
                             </div>
                             <div>
@@ -1364,6 +1578,7 @@
         function saveReceiptForm(e, payId) {
             e.preventDefault();
             const schoolName = document.getElementById('r-school-dropdown').value;
+            const year = parseInt(document.getElementById('r-year').value, 10) || store.selectedYear;
             const amount = parseFloat(document.getElementById('r-amount').value);
             const startDate = document.getElementById('r-start').value;
             const endDate = document.getElementById('r-end').value;
@@ -1373,13 +1588,14 @@
             if (payId && payId !== 'null') {
                 const pay = store.payments.find(p => p.id === payId);
                 if (pay) {
-                    Object.assign(pay, { schoolName, amount, startDate, endDate, fileUrl, status });
+                    Object.assign(pay, { schoolName, year, amount, startDate, endDate, fileUrl, status });
                     payObj = pay;
                 }
             } else {
                 const matchedSchool = store.schools.find(s => s.name === schoolName);
                 payObj = {
                     id: 'PAY-' + Math.floor(1000 + Math.random() * 9000),
+                    year,
                     schoolCode: matchedSchool ? matchedSchool.code : 'SK-' + Math.floor(100 + Math.random() * 900),
                     schoolName,
                     amount,
@@ -1495,9 +1711,6 @@
                                 <select onchange="changeYear(this.value)" class="bg-transparent font-extrabold text-xs text-brand-700 focus:outline-none cursor-pointer">
                                     ${store.availableYears.map(y => `<option value="${y}" ${store.selectedYear === y ? 'selected' : ''}>${y}</option>`).join('')}
                                 </select>
-                                <button onclick="openYearManagementModal()" class="p-1 text-brand-700 hover:bg-brand-100 rounded-lg text-xs" title="Urus Pilihan Tahun (Tambah/Edit/Padam)">
-                                    <i class="fas fa-cog"></i>
-                                </button>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -2153,13 +2366,13 @@
         }
         function saveTeacherForm(e, teacherId) {
             e.preventDefault();
-            const name = document.getElementById('t-name').value;
-            const ic = document.getElementById('t-ic').value;
-            const pass = document.getElementById('t-pass').value;
-            const phone = document.getElementById('t-phone').value;
-            const email = document.getElementById('t-email').value;
-            const position = document.getElementById('t-position').value;
-            const teachingSlots = parseInt(document.getElementById('t-slots').value) || 0;
+            const name = document.getElementById('t-name').value.trim();
+            const ic = document.getElementById('t-ic').value.trim();
+            const pass = document.getElementById('t-pass').value.trim();
+            const phone = document.getElementById('t-phone').value.trim();
+            const email = document.getElementById('t-email').value.trim();
+            const position = document.getElementById('t-position').value.trim();
+            const teachingSlots = parseInt(document.getElementById('t-slots').value, 10) || 0;
             const selectedSubjs = Array.from(document.querySelectorAll('.t-subj-check:checked')).map(cb => cb.value);
             let teacherObj;
             if (teacherId && teacherId !== 'null') {
@@ -2178,7 +2391,7 @@
             pushToBackend('saveTeacher', teacherObj);
             document.getElementById('teacher-form-modal').remove();
             renderApp();
-            showToast("Maklumat guru dikemas kini!", "success");
+            showToast("Maklumat guru dikemas kini & sedia untuk log masuk!", "success");
         }
         function deleteTeacher(id) {
             showConfirm("Padam Maklumat Guru", "Adakah anda pasti untuk memadam guru ini?", () => {
@@ -2919,9 +3132,7 @@
             window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
         }
         
-        // ==========================================
-        // 2. ANALISIS BEBANAN MASA MENGAJAR & WAKTU GANTI GURU (SYNC TAHUN SEMASA)
-        // ==========================================
+        // ANALISIS BEBANAN MASA MENGAJAR & WAKTU GANTI GURU
         function renderTeacherWorkloadSection() {
             const selectedWeekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
             return `
@@ -3093,7 +3304,7 @@
         }
         
         // ==========================================
-        // 3. PAPARAN GURU (BEBANAN MASA MENGAJAR SAYA SYNC MENGIKUT HARI SEMASA JADUAL WAKTU INDUK SEKOLAH)
+        // 3. PAPARAN GURU (KEKALKAN SEMUA FUNGSI)
         // ==========================================
         function renderTeacherView() {
             const currentTeacher = store.currentUser.data;
@@ -3102,7 +3313,6 @@
             
             const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
             
-            // Sync tahun semasa, minggu semasa & hari semasa
             const activeYear = store.selectedYear;
             const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
             const myDutyReliefs = store.reliefList.filter(r => 
@@ -3111,21 +3321,18 @@
                 r.date === store.teacherDutyDate
             );
             
-            // Bilangan waktu ganti pada hari semasa (tarikh dipilih) dalam tahun semasa
             const reliefOnSelectedDay = store.reliefList.filter(r => 
                 Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
                 r.substituteName === realTeacherObj.name &&
                 r.date === store.teacherDutyDate
             ).length;
             
-            // Bilangan waktu ganti dalam minggu semasa & tahun semasa
             const currentReliefSlotsInWeek = store.reliefList.filter(r => 
                 Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
                 r.substituteName === realTeacherObj.name &&
                 (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId
             ).length;
             
-            // Masa mengajar hakiki mingguan & harian yang disinkron terus dari Jadual Waktu Induk Sekolah
             const hakikiSlotsWeekly = getTeacherHakikiSlotsForYear(realTeacherObj, activeYear);
             const hakikiSlotsDaily = getTeacherHakikiSlotsForDay(realTeacherObj, selectedDayName, activeYear);
             const myTodayMasterSlots = store.timetable.filter(tt => 
@@ -3133,7 +3340,6 @@
                 tt.teacherName.trim().toLowerCase() === realTeacherObj.name.trim().toLowerCase() &&
                 tt.day === selectedDayName
             );
-
             return `
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -3146,7 +3352,6 @@
                         </button>
                     </div>
                     
-                    <!-- PAPARAN TUGAS GURU GANTI SAYA -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
                             <div>
@@ -3195,7 +3400,6 @@
                         </div>
                     </div>
                     
-                    <!-- BEBANAN MASA MENGAJAR SAYA (SYNC HARI SEMASA JADUAL WAKTU INDUK SEKOLAH) -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
                             <div>
@@ -3212,7 +3416,6 @@
                             </div>
                         </div>
                         
-                        <!-- STATS WAKTU GANTI HARIAN, MINGGUAN & TAHUNAN -->
                         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
                             <div class="p-4 bg-brand-50 border border-brand-100 rounded-xl">
                                 <p class="text-xs font-bold text-slate-500 uppercase">Hakiki Hari Ini (${selectedDayName})</p>
@@ -3235,8 +3438,6 @@
                                 <p class="text-[11px] text-slate-500 mt-0.5">Hakiki + Ganti Hari Ini</p>
                             </div>
                         </div>
-
-                        <!-- RINGKASAN SLOT MENGAJAR SAYA PADA HARI SEMASA DARI JADUAL INDUK -->
                         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                             <p class="text-xs font-bold text-slate-700 mb-2 flex items-center">
                                 <i class="fas fa-chalkboard text-brand-600 mr-1.5"></i>Slot Mengajar Hakiki Anda Pada Hari ${selectedDayName} (Jadual Waktu Induk Sekolah):
@@ -3257,13 +3458,11 @@
                             ` : `<p class="text-xs text-slate-400 italic">Tiada slot mengajar hakiki direkodkan dalam Jadual Waktu Induk Sekolah untuk hari ${selectedDayName}.</p>`}
                         </div>
                         
-                        <!-- CARTA BEBANAN GURU DISINKRON MENGIKUT HARI, MINGGU & TAHUN -->
                         <div class="h-60">
                             <canvas id="singleTeacherWorkloadChart"></canvas>
                         </div>
                     </div>
                     
-                    <!-- JADUAL WAKTU INDUK SEKOLAH -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex justify-between items-center border-b pb-3">
                             <div>
@@ -3434,7 +3633,6 @@
                         getDayNameFromDate(r.date) === dayName
                     ).length;
                 });
-
                 new Chart(stCanvas.getContext('2d'), {
                     type: 'bar',
                     data: {
@@ -3461,13 +3659,9 @@
         
         // INITIAL STARTUP
         window.onload = function() {
+            loadLocalBackup();
             renderApp();
-            checkAppsScriptConnection(true);
-            setInterval(() => {
-                if (store.currentUser && store.currentUser.role === 'superadmin') {
-                    checkAppsScriptConnection(true);
-                }
-            }, 30000);
+            checkAppsScriptConnection(true, false);
         };
     </script>
 </body>
