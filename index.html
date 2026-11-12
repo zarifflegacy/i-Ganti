@@ -18,7 +18,7 @@
         // ==========================================
         // KONFIGURASI:
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbzXDznwITDKX7rp1Ga5ljrEmjIPHRn8N4pPKvhzzB1pza6VcG6JX2h_1Bw-FEWG7OdO3Q/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzC-jVnNTrsm7Iu08f51sgXFE9EWJjvWANbcng-sggs2L_P2CYhYi7X5vs1ZntpiC5bKg/exec";
         
         tailwind.config = {
             theme: {
@@ -70,6 +70,7 @@
         <i id="toast-icon" class="fas fa-info-circle text-brand-500 text-lg"></i>
         <span id="toast-message" class="text-sm font-medium">Mesej Notifikasi</span>
     </div>
+
     <!-- MODAL CONFIRMATION DIALOG -->
     <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-95 opacity-0" id="confirm-modal-content">
@@ -84,6 +85,7 @@
             </div>
         </div>
     </div>
+
     <!-- MAIN APP SCRIPT LOGIC -->
     <script>
         // Mendapatkan tarikh semasa mengikut zon waktu tempatan
@@ -104,10 +106,13 @@
             currentUser: null, // { role: 'superadmin'|'school'|'teacher', data: {} }
             activeTab: 'dashboard',
             
+            // Pemecahan Sesi Sekolah ('pagi' atau 'petang')
+            schoolSession: 'pagi',
+            
             // Toggle Pemeriksaan Pertembungan Kelas & Guru
             enableClashDetection: true,
             
-            // AppsScript Backend Connection Status (Stabil: Sekali connected terus connected)
+            // AppsScript Backend Connection Status
             isBackendConnected: false, 
             isCheckingBackend: false,
             lastCheckedBackend: null,
@@ -116,7 +121,7 @@
             availableYears: [2026, 2025, 2024],
             selectedYear: currentYearReal || 2026,
             
-            // Teacher Duty View Date Filter (Sentiasa bermula dengan tarikh & hari semasa)
+            // Teacher Duty View Date Filter
             teacherDutyDate: todayStr,
             
             // Weeks settings (Minggu 1 - 43)
@@ -167,48 +172,57 @@
             teacherCanEditSchedule: true,
             subjects: ["Bahasa Melayu", "Bahasa Inggeris", "Matematik", "Sains", "Sejarah", "Pendidikan Islam", "RBT", "PJPK"],
             classes: [
-                { id: "C1", name: "1 USM", totalStudents: 32, classTeacher: "Siti Aminah Hassan" },
-                { id: "C2", name: "2 UKM", totalStudents: 30, classTeacher: "Mohd Ridzuan Ismail" },
-                { id: "C3", name: "3 UTM", totalStudents: 28, classTeacher: "Nurul Huda Zulkifli" },
-                { id: "C4", name: "4 UPM", totalStudents: 35, classTeacher: "Chong Wei Lian" }
+                { id: "C1", name: "1 USM", totalStudents: 32, classTeacher: "Siti Aminah Hassan", session: "pagi" },
+                { id: "C2", name: "2 UKM", totalStudents: 30, classTeacher: "Mohd Ridzuan Ismail", session: "pagi" },
+                { id: "C3", name: "3 UTM", totalStudents: 28, classTeacher: "Nurul Huda Zulkifli", session: "petang" },
+                { id: "C4", name: "4 UPM", totalStudents: 35, classTeacher: "Chong Wei Lian", session: "petang" }
             ],
             teachers: [
                 { id: "T101", ic: "880102035123", pass: "123456", name: "Siti Aminah Hassan", phone: "60123456789", email: "g-12345@moe-dl.edu.my", position: "Guru Penolong", subjects: ["Bahasa Melayu", "Sejarah"], teachingSlots: 24, session: "pagi" },
                 { id: "T102", ic: "850315086431", pass: "123456", name: "Mohd Ridzuan Ismail", phone: "60139876543", email: "g-23456@moe-dl.edu.my", position: "Guru Akademik", subjects: ["Matematik", "Sains"], teachingSlots: 22, session: "pagi" },
                 { id: "T103", ic: "901123145678", pass: "123456", name: "Nurul Huda Zulkifli", phone: "60171122334", email: "g-34567@moe-dl.edu.my", position: "Guru Bimbingan", subjects: ["Bahasa Inggeris"], teachingSlots: 20, session: "pagi" },
                 { id: "T104", ic: "920405026789", pass: "123456", name: "Chong Wei Lian", phone: "60195544332", email: "g-45678@moe-dl.edu.my", position: "Guru Penolong", subjects: ["Pendidikan Islam", "RBT"], teachingSlots: 25, session: "petang" },
-                { id: "T105", ic: "940812065432", pass: "123456", name: "K. Arumugam", phone: "60187766554", email: "g-56789@moe-dl.edu.my", position: "Guru PJK", subjects: ["PJPK", "Sains"], teachingSlots: 18, session: "pagi" }
+                { id: "T105", ic: "940812065432", pass: "123456", name: "K. Arumugam", phone: "60187766554", email: "g-56789@moe-dl.edu.my", position: "Guru PJK", subjects: ["PJPK", "Sains"], teachingSlots: 18, session: "petang" }
             ],
             timeSlots: [
-                { id: "SLOT1", slot: "W1", time: "07:30 - 08:00" },
-                { id: "SLOT2", slot: "W2", time: "08:00 - 08:30" },
-                { id: "SLOT3", slot: "W3", time: "08:30 - 09:00" },
-                { id: "SLOT4", slot: "W4", time: "09:00 - 09:30" },
-                { id: "SLOT5", slot: "W5", time: "09:30 - 10:00" },
-                { id: "SLOT6", slot: "W6", time: "10:00 - 10:30" },
-                { id: "SLOT7", slot: "W7", time: "10:30 - 11:00" },
-                { id: "SLOT8", slot: "W8", time: "11:00 - 11:30" },
-                { id: "SLOT9", slot: "W9", time: "11:30 - 12:00" },
-                { id: "SLOT10", slot: "W10", time: "12:00 - 12:30" }
+                { id: "SLOT1", slot: "W1", time: "07:30 - 08:00", session: "pagi" },
+                { id: "SLOT2", slot: "W2", time: "08:00 - 08:30", session: "pagi" },
+                { id: "SLOT3", slot: "W3", time: "08:30 - 09:00", session: "pagi" },
+                { id: "SLOT4", slot: "W4", time: "09:00 - 09:30", session: "pagi" },
+                { id: "SLOT5", slot: "W5", time: "09:30 - 10:00", session: "pagi" },
+                { id: "SLOT6", slot: "W6", time: "10:00 - 10:30", session: "pagi" },
+                { id: "SLOT7", slot: "W7", time: "10:30 - 11:00", session: "pagi" },
+                { id: "SLOT8", slot: "W8", time: "11:00 - 11:30", session: "pagi" },
+                { id: "SLOT9", slot: "W9", time: "11:30 - 12:00", session: "pagi" },
+                { id: "SLOT10", slot: "W10", time: "12:00 - 12:30", session: "pagi" },
+                { id: "SLOT11", slot: "P1", time: "13:10 - 13:40", session: "petang" },
+                { id: "SLOT12", slot: "P2", time: "13:40 - 14:10", session: "petang" },
+                { id: "SLOT13", slot: "P3", time: "14:10 - 14:40", session: "petang" },
+                { id: "SLOT14", slot: "P4", time: "14:40 - 15:10", session: "petang" },
+                { id: "SLOT15", slot: "P5", time: "15:10 - 15:40", session: "petang" },
+                { id: "SLOT16", slot: "P6", time: "16:00 - 16:30", session: "petang" },
+                { id: "SLOT17", slot: "P7", time: "16:30 - 17:00", session: "petang" },
+                { id: "SLOT18", slot: "P8", time: "17:00 - 17:30", session: "petang" }
             ],
             timetable: [
-                { id: "TT1", year: 2026, teacherName: "Siti Aminah Hassan", day: "Isnin", slot: "W1", subject: "Bahasa Melayu", className: "1 USM" },
-                { id: "TT2", year: 2026, teacherName: "Siti Aminah Hassan", day: "Isnin", slot: "W2", subject: "Bahasa Melayu", className: "1 USM" },
-                { id: "TT3", year: 2026, teacherName: "Siti Aminah Hassan", day: "Selasa", slot: "W4", subject: "Sejarah", className: "2 UKM" },
-                { id: "TT4", year: 2026, teacherName: "Mohd Ridzuan Ismail", day: "Isnin", slot: "W3", subject: "Matematik", className: "2 UKM" },
-                { id: "TT5", year: 2026, teacherName: "Mohd Ridzuan Ismail", day: "Rabu", slot: "W5", subject: "Sains", className: "3 UTM" },
-                { id: "TT6", year: 2026, teacherName: "Nurul Huda Zulkifli", day: "Isnin", slot: "W1", subject: "Bahasa Inggeris", className: "3 UTM" },
-                { id: "TT7", year: 2026, teacherName: "Nurul Huda Zulkifli", day: "Khamis", slot: "W2", subject: "Bahasa Inggeris", className: "4 UPM" },
-                { id: "TT8", year: 2026, teacherName: "K. Arumugam", day: "Isnin", slot: "W4", subject: "PJPK", className: "1 USM" }
+                { id: "TT1", year: 2026, session: "pagi", teacherName: "Siti Aminah Hassan", day: "Isnin", slot: "W1", subject: "Bahasa Melayu", className: "1 USM" },
+                { id: "TT2", year: 2026, session: "pagi", teacherName: "Siti Aminah Hassan", day: "Isnin", slot: "W2", subject: "Bahasa Melayu", className: "1 USM" },
+                { id: "TT3", year: 2026, session: "pagi", teacherName: "Siti Aminah Hassan", day: "Selasa", slot: "W4", subject: "Sejarah", className: "2 UKM" },
+                { id: "TT4", year: 2026, session: "pagi", teacherName: "Mohd Ridzuan Ismail", day: "Isnin", slot: "W3", subject: "Matematik", className: "2 UKM" },
+                { id: "TT5", year: 2026, session: "pagi", teacherName: "Mohd Ridzuan Ismail", day: "Rabu", slot: "W5", subject: "Sains", className: "1 USM" },
+                { id: "TT6", year: 2026, session: "pagi", teacherName: "Nurul Huda Zulkifli", day: "Isnin", slot: "W1", subject: "Bahasa Inggeris", className: "2 UKM" },
+                { id: "TT7", year: 2026, session: "petang", teacherName: "Chong Wei Lian", day: "Isnin", slot: "P1", subject: "Pendidikan Islam", className: "3 UTM" },
+                { id: "TT8", year: 2026, session: "petang", teacherName: "K. Arumugam", day: "Isnin", slot: "P2", subject: "PJPK", className: "4 UPM" }
             ],
             absences: [
-                { id: "ABS-1", year: 2026, teacherId: "T101", teacherName: "Siti Aminah Hassan", date: todayStr, reason: "Cuti Sakit (MC Hospital Serdang)", timestamp: "07:15" },
-                { id: "ABS-2", year: 2026, teacherId: "T102", teacherName: "Mohd Ridzuan Ismail", date: todayStr, reason: "Kursus Luar Jabatan Pendidikan", timestamp: "07:30" }
+                { id: "ABS-1", year: 2026, session: "pagi", teacherId: "T101", teacherName: "Siti Aminah Hassan", date: todayStr, reason: "Cuti Sakit (MC Hospital Serdang)", timestamp: "07:15" },
+                { id: "ABS-2", year: 2026, session: "pagi", teacherId: "T102", teacherName: "Mohd Ridzuan Ismail", date: todayStr, reason: "Kursus Luar Jabatan Pendidikan", timestamp: "07:30" },
+                { id: "ABS-3", year: 2026, session: "petang", teacherId: "T104", teacherName: "Chong Wei Lian", date: todayStr, reason: "Urusan Keluarga Kecemasan", timestamp: "12:30" }
             ],
             reliefList: [
-                { id: "REL-101", year: 2026, absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: todayStr, weekId: 'W1', slot: "W1", time: "07:30 - 08:00", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T103", substituteName: "Nurul Huda Zulkifli", confirmedBySubstitute: true, status: "Disahkan" },
-                { id: "REL-102", year: 2026, absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: todayStr, weekId: 'W1', slot: "W2", time: "08:00 - 08:30", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T105", substituteName: "K. Arumugam", confirmedBySubstitute: false, status: "Belum Disahkan" },
-                { id: "REL-103", year: 2026, absentTeacherId: "T102", absentTeacher: "Mohd Ridzuan Ismail", date: todayStr, weekId: 'W1', slot: "W3", time: "08:30 - 09:00", subject: "Matematik", className: "2 UKM", substituteId: "T104", substituteName: "Chong Wei Lian", confirmedBySubstitute: true, status: "Disahkan" }
+                { id: "REL-101", year: 2026, session: "pagi", absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: todayStr, weekId: 'W1', slot: "W1", time: "07:30 - 08:00", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T103", substituteName: "Nurul Huda Zulkifli", confirmedBySubstitute: true, status: "Disahkan" },
+                { id: "REL-102", year: 2026, session: "pagi", absentTeacherId: "T101", absentTeacher: "Siti Aminah Hassan", date: todayStr, weekId: 'W1', slot: "W2", time: "08:00 - 08:30", subject: "Bahasa Melayu", className: "1 USM", substituteId: "T102", substituteName: "Mohd Ridzuan Ismail", confirmedBySubstitute: false, status: "Belum Disahkan" },
+                { id: "REL-103", year: 2026, session: "petang", absentTeacherId: "T104", absentTeacher: "Chong Wei Lian", date: todayStr, weekId: 'W1', slot: "P1", time: "13:10 - 13:40", subject: "Pendidikan Islam", className: "3 UTM", substituteId: "T105", substituteName: "K. Arumugam", confirmedBySubstitute: true, status: "Disahkan" }
             ]
         };
 
@@ -231,13 +245,14 @@
         store.selectedWeekId = detectWeekIdFromDate(todayStr);
 
         // ==========================================
-        // LOCAL STORAGE PERSISTENCE (BACKUP & SYNC OFFLINE/ONLINE)
+        // LOCAL STORAGE PERSISTENCE (BACKUP & SYNC)
         // ==========================================
         function saveLocalBackup() {
             try {
                 const snapshot = {
                     availableYears: store.availableYears,
                     selectedYear: store.selectedYear,
+                    schoolSession: store.schoolSession,
                     schools: store.schools,
                     payments: store.payments,
                     teachers: store.teachers,
@@ -254,17 +269,18 @@
                     appLogo: store.appLogo,
                     superAdminAuth: store.superAdminAuth
                 };
-                localStorage.setItem('iganti_store_v2', JSON.stringify(snapshot));
+                localStorage.setItem('iganti_store_v3', JSON.stringify(snapshot));
             } catch (e) {}
         }
 
         function loadLocalBackup() {
             try {
-                const raw = localStorage.getItem('iganti_store_v2');
+                const raw = localStorage.getItem('iganti_store_v3');
                 if (!raw) return;
                 const saved = JSON.parse(raw);
                 if (Array.isArray(saved.availableYears) && saved.availableYears.length > 0) store.availableYears = saved.availableYears;
                 if (saved.selectedYear) store.selectedYear = Number(saved.selectedYear);
+                if (saved.schoolSession) store.schoolSession = saved.schoolSession;
                 if (Array.isArray(saved.schools)) store.schools = saved.schools;
                 if (Array.isArray(saved.payments)) store.payments = saved.payments;
                 if (Array.isArray(saved.teachers)) store.teachers = saved.teachers;
@@ -284,14 +300,12 @@
         }
 
         // ==========================================
-        // FUNGSI PENGESANAN & PENYIMPANAN BACKEND APPSCRIPT (STABIL)
+        // FUNGSI PENGESANAN & PENYIMPANAN BACKEND APPSCRIPT
         // ==========================================
         async function checkAppsScriptConnection(silent = false, forceCheck = false) {
-            // Jika sudah connected dan bukan semakan paksa manual, kekalkan status connected supaya stabil
             if (store.isBackendConnected && !forceCheck) {
                 return true;
             }
-
             if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) {
                 store.isBackendConnected = false;
                 store.isCheckingBackend = false;
@@ -300,10 +314,8 @@
                 if (!silent) showToast("URL Apps Script belum dikonfigurasi pada API_URL.", "error");
                 return false;
             }
-
             store.isCheckingBackend = true;
             if (!silent && store.currentUser?.role === 'superadmin') renderApp();
-
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 12000);
@@ -314,12 +326,10 @@
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-
                 if (response.ok) {
                     const text = await response.text();
                     let data = null;
                     try { data = JSON.parse(text); } catch (err) {}
-
                     if (data && (data.status === 'success' || data.connected === true)) {
                         store.isBackendConnected = true;
                         store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -336,7 +346,6 @@
                 store.isBackendConnected = false;
                 if (!silent) showToast("Gagal menyambung ke Google Apps Script. Sila semak deployment Web App.", "error");
             } catch (error) {
-                // Sekali connected terus kekal connected kecuali semakan manual gagal
                 if (!forceCheck && store.isBackendConnected) return true;
                 store.isBackendConnected = false;
                 if (!silent) showToast("Sambungan ke Google Apps Script gagal / terputus.", "error");
@@ -375,16 +384,46 @@
                     id: String(t.id || 'T' + Date.now()),
                     ic: String(t.ic || '').trim(),
                     pass: String(t.pass || '').trim(),
+                    session: String(t.session || 'pagi').toLowerCase(),
                     teachingSlots: Number(t.teachingSlots || 0),
                     subjects: Array.isArray(t.subjects) ? t.subjects : (typeof t.subjects === 'string' && t.subjects ? t.subjects.split(',').map(x => x.trim()) : [])
                 }));
             }
-            if (Array.isArray(backendData.classes) && backendData.classes.length > 0) store.classes = backendData.classes;
-            if (Array.isArray(backendData.timetable) && backendData.timetable.length > 0) store.timetable = backendData.timetable;
-            if (Array.isArray(backendData.absences) && backendData.absences.length > 0) store.absences = backendData.absences;
-            if (Array.isArray(backendData.reliefList) && backendData.reliefList.length > 0) store.reliefList = backendData.reliefList;
+            if (Array.isArray(backendData.classes) && backendData.classes.length > 0) {
+                store.classes = backendData.classes.map(c => ({
+                    ...c,
+                    session: String(c.session || 'pagi').toLowerCase()
+                }));
+            }
+            if (Array.isArray(backendData.timetable) && backendData.timetable.length > 0) {
+                store.timetable = backendData.timetable.map(tt => ({
+                    ...tt,
+                    year: Number(tt.year || 2026),
+                    session: String(tt.session || 'pagi').toLowerCase()
+                }));
+            }
+            if (Array.isArray(backendData.absences) && backendData.absences.length > 0) {
+                store.absences = backendData.absences.map(a => ({
+                    ...a,
+                    year: Number(a.year || getYearFromDate(a.date) || 2026),
+                    session: String(a.session || 'pagi').toLowerCase()
+                }));
+            }
+            if (Array.isArray(backendData.reliefList) && backendData.reliefList.length > 0) {
+                store.reliefList = backendData.reliefList.map(r => ({
+                    ...r,
+                    year: Number(r.year || getYearFromDate(r.date) || 2026),
+                    session: String(r.session || 'pagi').toLowerCase(),
+                    confirmedBySubstitute: r.confirmedBySubstitute === true || String(r.confirmedBySubstitute).toLowerCase() === 'true' || r.status === 'Disahkan'
+                }));
+            }
             if (Array.isArray(backendData.subjects) && backendData.subjects.length > 0) store.subjects = backendData.subjects;
-            if (Array.isArray(backendData.timeSlots) && backendData.timeSlots.length > 0) store.timeSlots = backendData.timeSlots;
+            if (Array.isArray(backendData.timeSlots) && backendData.timeSlots.length > 0) {
+                store.timeSlots = backendData.timeSlots.map(ts => ({
+                    ...ts,
+                    session: String(ts.session || (String(ts.slot).startsWith('P') ? 'petang' : 'pagi')).toLowerCase()
+                }));
+            }
             if (Array.isArray(backendData.weeks) && backendData.weeks.length > 0) store.weeks = backendData.weeks;
             if (Array.isArray(backendData.availableYears) && backendData.availableYears.length > 0) {
                 store.availableYears = backendData.availableYears.map(Number).sort((a, b) => b - a);
@@ -423,9 +462,7 @@
                         store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     }
                 }
-            } catch (e) {
-                // Tidak ubah status jika sudah connected agar paparan stabil
-            }
+            } catch (e) {}
         }
         
         // HELPER UTILITIES
@@ -505,13 +542,56 @@
             };
         }
 
+        // HELPER SESI SEKOLAH (PAGI / PETANG)
+        function setSchoolSession(session) {
+            store.schoolSession = session;
+            saveLocalBackup();
+            renderApp();
+            showToast(`Paparan ditukar kepada Sesi ${session === 'pagi' ? 'Pagi' : 'Petang'}`, 'info');
+        }
+        function getSessionLabel(session) {
+            return (session || store.schoolSession) === 'petang' ? 'Sesi Petang' : 'Sesi Pagi';
+        }
+        function renderSessionSwitcherBanner(subtitleText = "") {
+            const isPagi = store.schoolSession === 'pagi';
+            return `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-xl ${isPagi ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'} flex items-center justify-center text-base">
+                            <i class="fas ${isPagi ? 'fa-sun' : 'fa-moon'}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-800">Pemilihan Sesi Persekolahan</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${isPagi ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">
+                                    Aktif: ${isPagi ? 'Sesi Pagi' : 'Sesi Petang'}
+                                </span>
+                            </div>
+                            ${subtitleText ? `<p class="text-[11px] text-slate-500">${subtitleText}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="bg-slate-100 p-1 rounded-xl flex items-center w-full sm:w-auto border border-slate-200">
+                        <button type="button" onclick="setSchoolSession('pagi')" class="flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center space-x-1.5 ${isPagi ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
+                            <i class="fas fa-sun"></i>
+                            <span>Sesi Pagi</span>
+                        </button>
+                        <button type="button" onclick="setSchoolSession('petang')" class="flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center space-x-1.5 ${!isPagi ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
+                            <i class="fas fa-moon"></i>
+                            <span>Sesi Petang</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
         // ==========================================
         // HELPER PENGIRAAN MASA MENGAJAR HAKIKI & GANTI
         // ==========================================
-        function getTeacherHakikiSlotsForYear(teacherObj, year) {
+        function getTeacherHakikiSlotsForYear(teacherObj, year, sessionFilter = null) {
             const timetableEntries = store.timetable.filter(tt => 
                 Number(tt.year || 2026) === Number(year) && 
-                tt.teacherName.trim().toLowerCase() === teacherObj.name.trim().toLowerCase()
+                tt.teacherName.trim().toLowerCase() === teacherObj.name.trim().toLowerCase() &&
+                (!sessionFilter || (tt.session || teacherObj.session || 'pagi') === sessionFilter)
             );
             if (timetableEntries.length > 0) {
                 return timetableEntries.length;
@@ -579,7 +659,7 @@
         }
         
         // ==========================================
-        // PENGURUSAN TAHUN DASHBOARD (TAMBAH, EDIT & DELETE)
+        // PENGURUSAN TAHUN (TAMBAH, EDIT & DELETE)
         // ==========================================
         function openYearManagementModal() {
             const existing = document.getElementById('year-mgmt-modal');
@@ -878,23 +958,18 @@
             const rawId = document.getElementById('login-id').value.trim();
             const cleanId = rawId.replace(/[-\s]/g, '');
             const pass = document.getElementById('login-pass').value.trim();
-
             const btn = document.getElementById('login-submit-btn');
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyemak Akaun...';
             }
-
-            // Sinkron data terkini daripada backend jika API_URL aktif supaya sekolah/guru yang baru ditambah dapat log masuk
             if (API_URL && API_URL !== "PASTE_APPS_SCRIPT_URL" && API_URL.startsWith("http")) {
                 await checkAppsScriptConnection(true, false);
             }
-
             if (btn) {
                 btn.disabled = false;
                 btn.textContent = 'Log Masuk';
             }
-
             if (role === 'school') {
                 const school = store.schools.find(s => {
                     const sIc = String(s.ic || '').trim().replace(/[-\s]/g, '');
@@ -926,7 +1001,7 @@
         }
         
         // ==========================================
-        // 2. PAPARAN TETAPAN SUPER ADMIN (SYNC TAHUN & STATUS STABIL)
+        // 2. PAPARAN TETAPAN SUPER ADMIN
         // ==========================================
         function getSchoolsForSelectedYear() {
             return store.schools.filter(s => Number(s.year || 2026) === Number(store.selectedYear));
@@ -934,7 +1009,6 @@
         function getPaymentsForSelectedYear() {
             return store.payments.filter(p => Number(p.year || getYearFromDate(p.startDate) || 2026) === Number(store.selectedYear));
         }
-
         function renderSuperAdminView() {
             return `
                 <div class="space-y-6">
@@ -956,10 +1030,6 @@
                                 <i class="fas fa-cog mr-2"></i>Tetapan Logo & Aplikasi
                             </button>
                         </div>
-                        <button onclick="openYearManagementModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2 self-start sm:self-auto">
-                            <i class="fas fa-calendar-plus text-amber-400"></i>
-                            <span>Urus Tahun (${store.selectedYear})</span>
-                        </button>
                     </div>
                     ${renderSuperAdminTabContent()}
                 </div>
@@ -1023,7 +1093,6 @@
                                 <span>${store.isCheckingBackend ? 'Menyemak Sambungan...' : 'Uji Sambungan Semula'}</span>
                             </button>
                         </div>
-
                         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
                                 <h3 class="font-extrabold text-slate-800 text-base">Ringkasan Data Super Admin (Tahun ${store.selectedYear})</h3>
@@ -1039,7 +1108,6 @@
                                 </button>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
@@ -1654,36 +1722,38 @@
             showToast("Tetapan Logo & Nama Aplikasi berjaya diperkemas!", "success");
         }
         
-        // 3. PAPARAN TETAPAN SEKOLAH (KEKALKAN SEMUA FUNGSI)
+        // ==========================================
+        // 3. PAPARAN TETAPAN SEKOLAH (PECAHAN SESI PAGI & SESI PETANG)
+        // ==========================================
         function renderSchoolView() {
             return `
                 <div class="space-y-6">
                     <div class="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto hide-scrollbar">
-                        <button onclick="switchTab('dashboard')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'dashboard' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('dashboard')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'dashboard' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-chart-bar mr-2"></i>Dashboard
                         </button>
-                        <button onclick="switchTab('teachers')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'teachers' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('teachers')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'teachers' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-users mr-2"></i>Pengurusan Guru
                         </button>
-                        <button onclick="switchTab('timetable')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'timetable' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('timetable')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'timetable' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-calendar-alt mr-2"></i>Jadual Waktu
                         </button>
-                        <button onclick="switchTab('absences')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'absences' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('absences')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'absences' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-user-times mr-2"></i>Sejarah Ketidakhadiran
                         </button>
-                        <button onclick="switchTab('relief')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'relief' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('relief')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'relief' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-exchange-alt mr-2"></i>Guru Ganti
                         </button>
-                        <button onclick="switchTab('classes')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'classes' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('classes')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'classes' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-door-open mr-2"></i>Tetapan Kelas
                         </button>
-                        <button onclick="switchTab('weeks')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'weeks' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('weeks')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'weeks' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-calendar-week mr-2"></i>Tetapan Minggu
                         </button>
-                        <button onclick="switchTab('subscription')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'subscription' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('subscription')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'subscription' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-receipt mr-2"></i>Invois Langganan
                         </button>
-                        <button onclick="switchTab('reports')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all ${store.activeTab === 'reports' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                        <button onclick="switchTab('reports')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'reports' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
                             <i class="fas fa-file-alt mr-2"></i>Laporan
                         </button>
                     </div>
@@ -1692,18 +1762,24 @@
             `;
         }
         function renderSchoolTabContent() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+
             if (store.activeTab === 'dashboard') {
-                const yearAbsents = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(store.selectedYear));
+                const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
+                const yearAbsents = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(store.selectedYear) && (a.session || 'pagi') === curSession);
                 const filterAbsents = yearAbsents.filter(a => a.date === store.absentFilterDate);
                 
-                const yearReliefs = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear));
+                const yearReliefs = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && (r.session || 'pagi') === curSession);
                 const dateFilteredReliefs = yearReliefs.filter(r => r.date === store.reliefFilterDate);
+
                 return `
                     <div class="space-y-6">
+                        ${renderSessionSwitcherBanner(`Paparan statistik, kehadiran & bebanan bagi ${sessionLabel}.`)}
                         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
-                                <h3 class="font-extrabold text-slate-800 text-base">Dashboard Pentadbir Sekolah</h3>
-                                <p class="text-xs text-slate-500">Mengurus jadual guru ganti dan analisis bebanan bagi tahun <span class="font-bold text-brand-600">${store.selectedYear}</span>.</p>
+                                <h3 class="font-extrabold text-slate-800 text-base">Dashboard Pentadbir Sekolah (${sessionLabel})</h3>
+                                <p class="text-xs text-slate-500">Mengurus jadual guru ganti dan analisis bebanan bagi <span class="font-bold text-brand-600">${sessionLabel} (${store.selectedYear})</span>.</p>
                             </div>
                             <div class="flex items-center space-x-2 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl">
                                 <i class="fas fa-calendar font-bold text-brand-600 text-xs"></i>
@@ -1716,8 +1792,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase">Jumlah Guru Berdaftar</p>
-                                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1">${store.teachers.length}</h3>
+                                    <p class="text-xs font-bold text-slate-400 uppercase">Guru (${sessionLabel})</p>
+                                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1">${sessionTeachers.length}</h3>
                                 </div>
                                 <div class="w-12 h-12 rounded-2xl bg-blue-50 text-brand-600 flex items-center justify-center text-xl"><i class="fas fa-users"></i></div>
                             </div>
@@ -1725,7 +1801,7 @@
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-xs font-bold text-slate-400 uppercase">Guru Tidak Hadir</p>
+                                        <p class="text-xs font-bold text-slate-400 uppercase">Guru Tidak Hadir (${sessionLabel})</p>
                                         <h3 class="text-3xl font-extrabold text-red-600 mt-1">${filterAbsents.length}</h3>
                                     </div>
                                     <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl"><i class="fas fa-user-slash"></i></div>
@@ -1739,8 +1815,8 @@
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-xs font-bold text-slate-400 uppercase">Senarai Guru Ganti</p>
-                                        <h3 class="text-3xl font-extrabold text-emerald-600 mt-1">${dateFilteredReliefs.length} Guru</h3>
+                                        <p class="text-xs font-bold text-slate-400 uppercase">Guru Ganti (${sessionLabel})</p>
+                                        <h3 class="text-3xl font-extrabold text-emerald-600 mt-1">${dateFilteredReliefs.length} Slot</h3>
                                     </div>
                                     <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl"><i class="fas fa-user-check"></i></div>
                                 </div>
@@ -1754,7 +1830,7 @@
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-center mb-3 pb-2 border-b">
                                     <h4 class="font-bold text-slate-800 text-sm flex items-center">
-                                        <i class="fas fa-list text-red-500 mr-2"></i> Senarai Guru Tidak Hadir (${store.absentFilterDate})
+                                        <i class="fas fa-list text-red-500 mr-2"></i> Guru Tidak Hadir - ${sessionLabel} (${store.absentFilterDate})
                                     </h4>
                                 </div>
                                 <div class="space-y-2 max-h-56 overflow-y-auto">
@@ -1766,13 +1842,13 @@
                                             </div>
                                             <span class="font-mono text-slate-400 text-[10px]">${a.timestamp || ''}</span>
                                         </div>
-                                    `).join('') : `<p class="text-xs text-slate-400 italic py-4 text-center">Tiada rekod guru tidak hadir pada tarikh ini.</p>`}
+                                    `).join('') : `<p class="text-xs text-slate-400 italic py-4 text-center">Tiada rekod guru tidak hadir (${sessionLabel}) pada tarikh ini.</p>`}
                                 </div>
                             </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                 <div class="flex justify-between items-center mb-3 pb-2 border-b">
                                     <h4 class="font-bold text-slate-800 text-sm flex items-center">
-                                        <i class="fas fa-user-friends text-emerald-500 mr-2"></i> Senarai Guru Ganti Dilantik (${store.reliefFilterDate})
+                                        <i class="fas fa-user-friends text-emerald-500 mr-2"></i> Guru Ganti Dilantik - ${sessionLabel} (${store.reliefFilterDate})
                                     </h4>
                                 </div>
                                 <div class="space-y-2 max-h-56 overflow-y-auto">
@@ -1792,7 +1868,7 @@
                                                 </div>
                                             </div>
                                         `;
-                                    }).join('') : `<p class="text-xs text-slate-400 italic py-4 text-center">Tiada rekod guru ganti pada tarikh ini.</p>`}
+                                    }).join('') : `<p class="text-xs text-slate-400 italic py-4 text-center">Tiada rekod guru ganti (${sessionLabel}) pada tarikh ini.</p>`}
                                 </div>
                             </div>
                         </div>
@@ -1934,22 +2010,29 @@
             });
         }
         
-        // 3.2 TETAPAN KELAS
+        // 3.2 TETAPAN KELAS (DISOKONG SESI PAGI & PETANG)
         function renderClassManagement() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+            const filteredClasses = store.classes.filter(c => (c.session || 'pagi') === curSession);
             return `
                 <div class="space-y-6">
+                    ${renderSessionSwitcherBanner(`Mengurus senarai kelas bagi ${sessionLabel}.`)}
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                        <h3 class="font-bold text-slate-800"><i class="fas fa-door-open text-brand-600 mr-2"></i>Pengurusan Senarai Kelas</h3>
+                        <h3 class="font-bold text-slate-800"><i class="fas fa-door-open text-brand-600 mr-2"></i>Pengurusan Senarai Kelas (${sessionLabel})</h3>
                         <button onclick="openClassModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center space-x-2">
-                            <i class="fas fa-plus"></i><span>Tambah Kelas Baru</span>
+                            <i class="fas fa-plus"></i><span>Tambah Kelas (${sessionLabel})</span>
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${store.classes.map(c => `
+                        ${filteredClasses.length > 0 ? filteredClasses.map(c => `
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center">
                                 <div>
-                                    <h4 class="font-extrabold text-slate-800 text-lg">${c.name}</h4>
-                                    <p class="text-xs text-slate-500 font-medium">Guru Kelas: <span class="font-semibold text-slate-700">${c.classTeacher}</span></p>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-extrabold text-slate-800 text-lg">${c.name}</h4>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${c.session === 'petang' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${getSessionLabel(c.session)}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 font-medium mt-1">Guru Kelas: <span class="font-semibold text-slate-700">${c.classTeacher}</span></p>
                                     <p class="text-xs text-brand-600 font-bold mt-1">${c.totalStudents} Murid</p>
                                 </div>
                                 <div class="flex space-x-1">
@@ -1957,7 +2040,7 @@
                                     <button onclick="deleteClass('${c.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                             </div>
-                        `).join('')}
+                        `).join('') : `<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-100 text-center text-xs text-slate-400 italic">Tiada kelas didaftarkan bagi ${sessionLabel}.</div>`}
                     </div>
                 </div>
             `;
@@ -1965,6 +2048,7 @@
         function openClassModal(classId = null) {
             const cls = classId ? store.classes.find(c => c.id === classId) : null;
             const isEdit = !!cls;
+            const defaultSession = cls ? (cls.session || 'pagi') : (store.schoolSession || 'pagi');
             const modalHtml = `
                 <div id="class-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
@@ -1973,15 +2057,24 @@
                             <button onclick="document.getElementById('class-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
                         <form onsubmit="saveClassForm(event, '${classId}')" class="space-y-4 text-sm">
-                            <div>
-                                <label class="block font-semibold mb-1">Nama Kelas *</label>
-                                <input type="text" id="cls-name" required value="${cls ? cls.name : ''}" placeholder="cth: 1 USM" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-semibold mb-1">Nama Kelas *</label>
+                                    <input type="text" id="cls-name" required value="${cls ? cls.name : ''}" placeholder="cth: 1 USM" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1">Sesi Persekolahan *</label>
+                                    <select id="cls-session" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-brand-700">
+                                        <option value="pagi" ${defaultSession === 'pagi' ? 'selected' : ''}>Sesi Pagi</option>
+                                        <option value="petang" ${defaultSession === 'petang' ? 'selected' : ''}>Sesi Petang</option>
+                                    </select>
+                                </div>
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">Guru Kelas</label>
                                 <select id="cls-teacher" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium">
                                     <option value="">-- Pilih Guru Kelas --</option>
-                                    ${store.teachers.map(t => `<option value="${t.name}" ${cls && cls.classTeacher === t.name ? 'selected' : ''}>${t.name}</option>`).join('')}
+                                    ${store.teachers.map(t => `<option value="${t.name}" ${cls && cls.classTeacher === t.name ? 'selected' : ''}>${t.name} (${getSessionLabel(t.session)})</option>`).join('')}
                                 </select>
                             </div>
                             <div>
@@ -2001,19 +2094,20 @@
         function saveClassForm(e, classId) {
             e.preventDefault();
             const name = document.getElementById('cls-name').value;
+            const session = document.getElementById('cls-session').value;
             const classTeacher = document.getElementById('cls-teacher').value;
             const totalStudents = parseInt(document.getElementById('cls-students').value) || 0;
             let clsObj;
             if (classId && classId !== 'null') {
                 const cls = store.classes.find(c => c.id === classId);
                 if (cls) {
-                    Object.assign(cls, { name, classTeacher, totalStudents });
+                    Object.assign(cls, { name, session, classTeacher, totalStudents });
                     clsObj = cls;
                 }
             } else {
                 clsObj = {
                     id: 'C' + Date.now(),
-                    name, classTeacher, totalStudents
+                    name, session, classTeacher, totalStudents
                 };
                 store.classes.push(clsObj);
             }
@@ -2123,15 +2217,19 @@
             renderApp();
         }
         
-        // 3.4 PENGURUSAN GURU & SUBJEK
+        // 3.4 PENGURUSAN GURU & SUBJEK (PECAHAN SESI PAGI & SESI PETANG)
         function renderTeacherManagement() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+            const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
             return `
                 <div class="space-y-6">
+                    ${renderSessionSwitcherBanner(`Senarai guru, kata laluan & subjek mengajar bagi ${sessionLabel}.`)}
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                         <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                             <div class="relative w-full sm:w-64">
                                 <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-sm"></i>
-                                <input type="text" id="teacher-search" oninput="filterTeachers()" placeholder="Cari nama guru..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <input type="text" id="teacher-search" oninput="filterTeachers()" placeholder="Cari guru (${sessionLabel})..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                             </div>
                             <select id="teacher-subject-filter" onchange="filterTeachers()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
                                 <option value="">-- Semua Subjek --</option>
@@ -2143,7 +2241,7 @@
                                 <i class="fas fa-book mr-1"></i> Pengurusan Subjek
                             </button>
                             <button onclick="openTeacherModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2">
-                                <i class="fas fa-user-plus"></i><span>Tambah Guru</span>
+                                <i class="fas fa-user-plus"></i><span>Tambah Guru (${sessionLabel})</span>
                             </button>
                         </div>
                     </div>
@@ -2152,7 +2250,7 @@
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-bold">
                                     <tr>
-                                        <th class="p-4">Nama Guru</th>
+                                        <th class="p-4">Nama Guru & Sesi</th>
                                         <th class="p-4">No. IC & Kata Laluan</th>
                                         <th class="p-4">Subjek Mengajar</th>
                                         <th class="p-4">Waktu Mengajar (${store.selectedYear})</th>
@@ -2160,7 +2258,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="teacher-table-body">
-                                    ${renderTeacherRows(store.teachers)}
+                                    ${renderTeacherRows(sessionTeachers)}
                                 </tbody>
                             </table>
                         </div>
@@ -2169,13 +2267,20 @@
             `;
         }
         function renderTeacherRows(list) {
+            if (!list || list.length === 0) {
+                return `<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">Tiada rekod guru bagi ${getSessionLabel(store.schoolSession)}.</td></tr>`;
+            }
             return list.map(t => {
-                const hakikiYear = getTeacherHakikiSlotsForYear(t, store.selectedYear);
+                const hakikiYear = getTeacherHakikiSlotsForYear(t, store.selectedYear, t.session || store.schoolSession);
+                const tSession = t.session || 'pagi';
                 return `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="p-4">
-                            <div class="font-bold text-slate-800">${t.name}</div>
-                            <div class="text-xs text-slate-400">${t.position || 'Guru'} | Emel: ${t.email}</div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-slate-800">${t.name}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${tSession === 'petang' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${getSessionLabel(tSession)}</span>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-0.5">${t.position || 'Guru'} | Emel: ${t.email}</div>
                         </td>
                         <td class="p-4">
                             <div class="font-mono text-slate-700 font-semibold">${t.ic}</div>
@@ -2217,12 +2322,14 @@
             }
         }
         function filterTeachers() {
+            const curSession = store.schoolSession || 'pagi';
             const query = document.getElementById('teacher-search').value.toLowerCase();
             const subj = document.getElementById('teacher-subject-filter').value;
             const filtered = store.teachers.filter(t => {
+                const matchSession = (t.session || 'pagi') === curSession;
                 const matchName = t.name.toLowerCase().includes(query) || t.ic.includes(query);
                 const matchSubj = subj === "" || t.subjects.includes(subj);
-                return matchName && matchSubj;
+                return matchSession && matchName && matchSubj;
             });
             document.getElementById('teacher-table-body').innerHTML = renderTeacherRows(filtered);
         }
@@ -2296,6 +2403,7 @@
         function openTeacherModal(teacherId = null) {
             const teacher = teacherId ? store.teachers.find(t => t.id === teacherId) : null;
             const isEdit = !!teacher;
+            const defaultSession = teacher ? (teacher.session || 'pagi') : (store.schoolSession || 'pagi');
             const modalHtml = `
                 <div id="teacher-form-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
@@ -2304,9 +2412,18 @@
                             <button onclick="document.getElementById('teacher-form-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
                         <form onsubmit="saveTeacherForm(event, '${teacherId}')" class="space-y-4 text-sm">
-                            <div>
-                                <label class="block font-semibold mb-1">Nama Penuh *</label>
-                                <input type="text" id="t-name" required value="${teacher ? teacher.name : ''}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="col-span-2">
+                                    <label class="block font-semibold mb-1">Nama Penuh *</label>
+                                    <input type="text" id="t-name" required value="${teacher ? teacher.name : ''}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold mb-1">Sesi Bertugas *</label>
+                                    <select id="t-session" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-brand-700">
+                                        <option value="pagi" ${defaultSession === 'pagi' ? 'selected' : ''}>Sesi Pagi</option>
+                                        <option value="petang" ${defaultSession === 'petang' ? 'selected' : ''}>Sesi Petang</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -2367,6 +2484,7 @@
         function saveTeacherForm(e, teacherId) {
             e.preventDefault();
             const name = document.getElementById('t-name').value.trim();
+            const session = document.getElementById('t-session').value;
             const ic = document.getElementById('t-ic').value.trim();
             const pass = document.getElementById('t-pass').value.trim();
             const phone = document.getElementById('t-phone').value.trim();
@@ -2378,13 +2496,13 @@
             if (teacherId && teacherId !== 'null') {
                 const t = store.teachers.find(item => item.id === teacherId);
                 if (t) {
-                    Object.assign(t, { name, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs });
+                    Object.assign(t, { name, session, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs });
                     teacherObj = t;
                 }
             } else {
                 teacherObj = {
                     id: 'T' + Date.now(),
-                    name, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs, session: 'pagi'
+                    name, session, ic, pass, phone, email, position, teachingSlots, subjects: selectedSubjs
                 };
                 store.teachers.push(teacherObj);
             }
@@ -2402,34 +2520,38 @@
             });
         }
         
-        // JADUAL WAKTU INDUK SEKOLAH
+        // JADUAL WAKTU INDUK SEKOLAH (PECAHAN SESI PAGI & SESI PETANG)
         function toggleClashDetection() {
             store.enableClashDetection = !store.enableClashDetection;
             renderApp();
             showToast(`Pemeriksaan Pertembungan Kelas & Guru: ${store.enableClashDetection ? 'Diaktifkan' : 'Dinyahaktifkan'}`, store.enableClashDetection ? 'success' : 'info');
         }
         function renderTimetableManagement() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
             const days = ["Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"];
-            const currentTimetable = store.timetable.filter(tt => Number(tt.year || 2026) === Number(store.selectedYear));
+            const sessionSlots = store.timeSlots.filter(s => (s.session || (String(s.slot).startsWith('P') ? 'petang' : 'pagi')) === curSession);
+            const currentTimetable = store.timetable.filter(tt => Number(tt.year || 2026) === Number(store.selectedYear) && (tt.session || 'pagi') === curSession);
             return `
                 <div class="space-y-6">
+                    ${renderSessionSwitcherBanner(`Jadual waktu induk, slot masa & muat naik pukal bagi ${sessionLabel}.`)}
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="flex flex-wrap items-center gap-2">
                             <button onclick="openManageTimeSlotsModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-all flex items-center space-x-1 shadow-sm">
                                 <i class="fas fa-clock text-amber-400"></i>
-                                <span>Pengurusan Waktu Masa Jadual (Edit Slot)</span>
+                                <span>Slot Masa (${sessionLabel})</span>
                             </button>
                             <button onclick="openAddSlotModal()" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition-all flex items-center space-x-1 shadow-sm">
                                 <i class="fas fa-plus"></i>
-                                <span>Tambah Entry Jadual</span>
+                                <span>Tambah Entry Jadual (${sessionLabel})</span>
                             </button>
                             <button onclick="downloadCSVTemplate()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all flex items-center space-x-1 shadow-sm">
                                 <i class="fas fa-file-csv"></i>
-                                <span>Muat Turun Template CSV</span>
+                                <span>Template CSV (${sessionLabel})</span>
                             </button>
                             <label class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition-all flex items-center space-x-1 shadow-sm cursor-pointer">
                                 <i class="fas fa-file-upload"></i>
-                                <span>Muatnaik Jadual (CSV Pukal)</span>
+                                <span>Muatnaik CSV (${sessionLabel})</span>
                                 <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="handleBulkCSVUpload(event)">
                             </label>
                         </div>
@@ -2444,7 +2566,7 @@
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2">
                             <h3 class="font-bold text-slate-800 text-base flex items-center">
-                                <i class="fas fa-table text-brand-600 mr-2"></i>Jadual Waktu Induk Sekolah (${store.selectedYear})
+                                <i class="fas fa-table text-brand-600 mr-2"></i>Jadual Waktu Induk Sekolah - ${sessionLabel} (${store.selectedYear})
                             </h3>
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs font-semibold text-slate-600">Pemeriksaan Pertembungan Kelas & Guru:</span>
@@ -2463,7 +2585,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${store.timeSlots.map(slot => `
+                                    ${sessionSlots.length > 0 ? sessionSlots.map(slot => `
                                         <tr>
                                             <td class="p-2 border border-slate-200 font-bold bg-slate-50 text-brand-700 font-mono text-center">
                                                 <div>${slot.slot}</div>
@@ -2485,7 +2607,7 @@
                                                 `;
                                             }).join('')}
                                         </tr>
-                                    `).join('')}
+                                    `).join('') : `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic">Tiada slot masa ditetapkan bagi ${sessionLabel}. Sila klik "Slot Masa (${sessionLabel})" untuk menambah.</td></tr>`}
                                 </tbody>
                             </table>
                         </div>
@@ -2494,22 +2616,26 @@
             `;
         }
         function downloadCSVTemplate() {
+            const curSession = store.schoolSession || 'pagi';
+            const sampleRow = curSession === 'petang'
+                ? "Chong Wei Lian,Isnin,P1,Pendidikan Islam,3 UTM\nK. Arumugam,Isnin,P2,PJPK,4 UPM\n"
+                : "Siti Aminah Hassan,Isnin,W1,Bahasa Melayu,1 USM\nMohd Ridzuan Ismail,Isnin,W3,Matematik,2 UKM\n";
             const csvContent = "data:text/csv;charset=utf-8," 
                 + "NamaGuru,Hari,Slot,Subjek,Kelas\n"
-                + "Siti Aminah Hassan,Isnin,W1,Bahasa Melayu,1 USM\n"
-                + "Mohd Ridzuan Ismail,Isnin,W3,Matematik,2 UKM\n";
+                + sampleRow;
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Template_Jadual_Waktu_${store.selectedYear}.csv`);
+            link.setAttribute("download", `Template_Jadual_${curSession.toUpperCase()}_${store.selectedYear}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("Template CSV Jadual Waktu berjaya dimuat turun!", "success");
+            showToast(`Template CSV (${getSessionLabel(curSession)}) berjaya dimuat turun!`, "success");
         }
         function handleBulkCSVUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
+            const curSession = store.schoolSession || 'pagi';
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const text = evt.target.result;
@@ -2525,8 +2651,8 @@
                         const [teacherName, day, slot, subject, className] = cols.map(c => c.trim());
                         
                         if (store.enableClashDetection) {
-                            const isClassClash = store.timetable.some(tt => Number(tt.year || 2026) === Number(store.selectedYear) && tt.day === day && tt.slot === slot && tt.className === className);
-                            const isTeacherClash = store.timetable.some(tt => Number(tt.year || 2026) === Number(store.selectedYear) && tt.day === day && tt.slot === slot && tt.teacherName === teacherName);
+                            const isClassClash = store.timetable.some(tt => Number(tt.year || 2026) === Number(store.selectedYear) && (tt.session || 'pagi') === curSession && tt.day === day && tt.slot === slot && tt.className === className);
+                            const isTeacherClash = store.timetable.some(tt => Number(tt.year || 2026) === Number(store.selectedYear) && (tt.session || 'pagi') === curSession && tt.day === day && tt.slot === slot && tt.teacherName === teacherName);
                             
                             if (isClassClash || isTeacherClash) {
                                 errorCount++;
@@ -2537,6 +2663,7 @@
                         const newEntry = {
                             id: 'TT' + Date.now() + Math.floor(Math.random() * 1000),
                             year: store.selectedYear,
+                            session: curSession,
                             teacherName,
                             day,
                             slot,
@@ -2550,7 +2677,7 @@
                 }
                 if (addedItems.length > 0) pushToBackend('bulkSaveTimetable', { entries: addedItems });
                 renderApp();
-                showToast(`Muat naik selesai! ${addedCount} entry ditambah. (${errorCount} ditolak kerana bertembung)`, addedCount > 0 ? "success" : "error");
+                showToast(`Muat naik ${getSessionLabel(curSession)} selesai! ${addedCount} entry ditambah. (${errorCount} ditolak kerana bertembung)`, addedCount > 0 ? "success" : "error");
             };
             reader.readAsText(file);
         }
@@ -2560,23 +2687,26 @@
             showToast(`Status kebenaran ditukar: ${store.teacherCanEditSchedule ? 'guru boleh kemaskini' : 'guru tidak dibenarkan kemaskini'}`);
         }
         function openManageTimeSlotsModal() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+            const sessionSlots = store.timeSlots.filter(s => (s.session || (String(s.slot).startsWith('P') ? 'petang' : 'pagi')) === curSession);
             const modalHtml = `
                 <div id="slots-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-slate-900 text-base"><i class="fas fa-clock text-amber-500 mr-2"></i>Pengurusan Waktu Masa Jadual (Tambah, Edit, Padam Slot)</h3>
+                            <h3 class="font-bold text-slate-900 text-base"><i class="fas fa-clock text-amber-500 mr-2"></i>Pengurusan Slot Masa (${sessionLabel})</h3>
                             <button onclick="document.getElementById('slots-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4 space-y-2">
-                            <p class="text-xs font-bold text-slate-700">+ Tambah Slot Masa Baru</p>
+                            <p class="text-xs font-bold text-slate-700">+ Tambah Slot Masa Baru (${sessionLabel})</p>
                             <div class="flex space-x-2">
-                                <input type="text" id="new-slot-id" placeholder="cth: W11" class="w-20 p-2 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold">
-                                <input type="text" id="new-slot-time" placeholder="cth: 12:30 - 01:00" class="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-xs">
+                                <input type="text" id="new-slot-id" placeholder="${curSession === 'petang' ? 'cth: P9' : 'cth: W11'}" class="w-20 p-2 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold">
+                                <input type="text" id="new-slot-time" placeholder="${curSession === 'petang' ? 'cth: 17:30 - 18:00' : 'cth: 12:30 - 01:00'}" class="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-xs">
                                 <button onclick="addNewTimeSlot()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs">Tambah</button>
                             </div>
                         </div>
                         <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
-                            ${store.timeSlots.map(s => `
+                            ${sessionSlots.map(s => `
                                 <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                                     <span class="font-bold text-xs text-brand-600 font-mono w-12">${s.slot}</span>
                                     <input type="text" id="slot-time-${s.id}" value="${s.time}" class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 w-36 text-center">
@@ -2593,6 +2723,7 @@
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
         function addNewTimeSlot() {
+            const curSession = store.schoolSession || 'pagi';
             const slotIdVal = document.getElementById('new-slot-id').value.trim().toUpperCase();
             const slotTimeVal = document.getElementById('new-slot-time').value.trim();
             if (!slotIdVal || !slotTimeVal) {
@@ -2602,11 +2733,12 @@
             const slotObj = {
                 id: 'SLOT-' + Date.now(),
                 slot: slotIdVal,
-                time: slotTimeVal
+                time: slotTimeVal,
+                session: curSession
             };
             store.timeSlots.push(slotObj);
             pushToBackend('saveTimeSlots', { timeSlots: store.timeSlots });
-            showToast(`Slot ${slotIdVal} berjaya ditambah!`, "success");
+            showToast(`Slot ${slotIdVal} (${getSessionLabel(curSession)}) berjaya ditambah!`, "success");
             document.getElementById('slots-modal').remove();
             openManageTimeSlotsModal();
             renderApp();
@@ -2632,18 +2764,23 @@
             });
         }
         function openAddSlotModal() {
+            const isTeacherRole = store.currentUser?.role === 'teacher';
+            const activeSession = isTeacherRole ? (store.currentUser.data.session || 'pagi') : (store.schoolSession || 'pagi');
+            const sessionTeachers = isTeacherRole ? store.teachers : store.teachers.filter(t => (t.session || 'pagi') === activeSession);
+            const sessionSlots = store.timeSlots.filter(s => (s.session || (String(s.slot).startsWith('P') ? 'petang' : 'pagi')) === activeSession);
+            const sessionClasses = store.classes.filter(c => (c.session || 'pagi') === activeSession);
             const modalHtml = `
                 <div id="add-tt-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-slate-900">Tambah Entry Jadual (${store.selectedYear})</h3>
+                            <h3 class="font-bold text-slate-900">Tambah Entry Jadual - ${getSessionLabel(activeSession)} (${store.selectedYear})</h3>
                             <button onclick="document.getElementById('add-tt-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
-                        <form onsubmit="saveTimetableEntry(event)" class="space-y-4 text-sm">
+                        <form onsubmit="saveTimetableEntry(event, '${activeSession}')" class="space-y-4 text-sm">
                             <div>
                                 <label class="block font-semibold mb-1">Pilih Guru *</label>
                                 <select id="tt-teacher" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                    ${store.teachers.map(t => `<option value="${t.name}" ${store.currentUser?.role === 'teacher' && store.currentUser.data.name === t.name ? 'selected' : ''}>${t.name}</option>`).join('')}
+                                    ${(sessionTeachers.length > 0 ? sessionTeachers : store.teachers).map(t => `<option value="${t.name}" ${isTeacherRole && store.currentUser.data.name === t.name ? 'selected' : ''}>${t.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
@@ -2658,9 +2795,9 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block font-semibold mb-1">Slot *</label>
+                                    <label class="block font-semibold mb-1">Slot (${getSessionLabel(activeSession)}) *</label>
                                     <select id="tt-slot" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                        ${store.timeSlots.map(s => `<option value="${s.slot}">${s.slot} (${s.time})</option>`).join('')}
+                                        ${(sessionSlots.length > 0 ? sessionSlots : store.timeSlots).map(s => `<option value="${s.slot}">${s.slot} (${s.time})</option>`).join('')}
                                     </select>
                                 </div>
                             </div>
@@ -2672,9 +2809,9 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block font-semibold mb-1">Kelas *</label>
+                                    <label class="block font-semibold mb-1">Kelas (${getSessionLabel(activeSession)}) *</label>
                                     <select id="tt-class" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                        ${store.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                                        ${(sessionClasses.length > 0 ? sessionClasses : store.classes).map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
                                     </select>
                                 </div>
                             </div>
@@ -2688,9 +2825,11 @@
             `;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
-        function saveTimetableEntry(e) {
+        function saveTimetableEntry(e, sessionParam = null) {
             e.preventDefault();
             const teacherName = document.getElementById('tt-teacher').value;
+            const teacherObj = store.teachers.find(t => t.name === teacherName);
+            const activeSession = sessionParam || (teacherObj ? teacherObj.session : store.schoolSession) || 'pagi';
             const day = document.getElementById('tt-day').value;
             const slot = document.getElementById('tt-slot').value;
             const subject = document.getElementById('tt-subject').value;
@@ -2699,6 +2838,7 @@
             if (store.enableClashDetection) {
                 const isClassClash = store.timetable.some(tt => 
                     Number(tt.year || 2026) === Number(store.selectedYear) &&
+                    (tt.session || 'pagi') === activeSession &&
                     tt.day === day && 
                     tt.slot === slot && 
                     tt.className === className
@@ -2709,6 +2849,7 @@
                 }
                 const isTeacherClash = store.timetable.some(tt => 
                     Number(tt.year || 2026) === Number(store.selectedYear) &&
+                    (tt.session || 'pagi') === activeSession &&
                     tt.day === day && 
                     tt.slot === slot && 
                     tt.teacherName === teacherName
@@ -2722,6 +2863,7 @@
             const newEntry = {
                 id: 'TT' + Date.now(),
                 year: store.selectedYear,
+                session: activeSession,
                 teacherName,
                 day, slot, subject, className
             };
@@ -2729,7 +2871,7 @@
             pushToBackend('saveTimetableEntry', newEntry);
             document.getElementById('add-tt-modal').remove();
             renderApp();
-            showToast("Entry jadual berjaya ditambah!", "success");
+            showToast(`Entry jadual (${getSessionLabel(activeSession)}) berjaya ditambah!`, "success");
         }
         function deleteTimetableEntry(id) {
             store.timetable = store.timetable.filter(tt => tt.id !== id);
@@ -2738,16 +2880,19 @@
             showToast("Entry jadual dipadam.");
         }
         
-        // ABSENCE MANAGEMENT
+        // ABSENCE MANAGEMENT (PECAHAN SESI PAGI & SESI PETANG)
         function renderAbsenceManagement() {
-            const yearAbsences = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(store.selectedYear));
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+            const yearAbsences = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(store.selectedYear) && (a.session || 'pagi') === curSession);
             const selectedAbsenceList = yearAbsences.filter(a => a.date === store.absentFilterDate);
             return `
                 <div class="space-y-6">
+                    ${renderSessionSwitcherBanner(`Sejarah dan rekod ketidakhadiran guru bagi ${sessionLabel}.`)}
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-history text-brand-600 mr-2"></i>Rekod Sejarah Ketidakhadiran Guru (${store.selectedYear})</h3>
-                            <p class="text-xs text-slate-500">Rekod ketidakhadiran guru mengikut tarikh pilihan.</p>
+                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-history text-brand-600 mr-2"></i>Sejarah Ketidakhadiran Guru - ${sessionLabel} (${store.selectedYear})</h3>
+                            <p class="text-xs text-slate-500">Rekod ketidakhadiran guru ${sessionLabel.toLowerCase()} mengikut tarikh pilihan.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                             <div class="flex items-center space-x-2">
@@ -2755,7 +2900,7 @@
                                 <input type="date" value="${store.absentFilterDate}" onchange="changeAbsentDate(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
                             </div>
                             <button onclick="openAddAbsenceModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center space-x-2">
-                                <i class="fas fa-plus"></i><span>Rekod Ketidakhadiran Baru</span>
+                                <i class="fas fa-plus"></i><span>Rekod Ketidakhadiran (${sessionLabel})</span>
                             </button>
                         </div>
                     </div>
@@ -2764,7 +2909,7 @@
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-bold">
                                     <tr>
-                                        <th class="p-3">Guru</th>
+                                        <th class="p-3">Guru (${sessionLabel})</th>
                                         <th class="p-3">Tarikh</th>
                                         <th class="p-3">Sebab Ketidakhadiran</th>
                                         <th class="p-3">Masa Direkodkan</th>
@@ -2785,7 +2930,7 @@
                                         </tr>
                                     `).join('') : `
                                         <tr>
-                                            <td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">Tiada rekod ketidakhadiran guru pada tarikh ini.</td>
+                                            <td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">Tiada rekod ketidakhadiran guru (${sessionLabel}) pada tarikh ini.</td>
                                         </tr>
                                     `}
                                 </tbody>
@@ -2796,20 +2941,23 @@
             `;
         }
         function openAddAbsenceModal(absId = null) {
+            const curSession = store.schoolSession || 'pagi';
             const abs = absId ? store.absences.find(a => a.id === absId) : null;
             const isEdit = !!abs;
+            const targetSession = abs ? (abs.session || curSession) : curSession;
+            const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === targetSession);
             const modalHtml = `
                 <div id="abs-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-slate-900">${isEdit ? 'Edit Rekod Ketidakhadiran' : 'Rekod Ketidakhadiran Guru'}</h3>
+                            <h3 class="font-bold text-slate-900">${isEdit ? 'Edit Rekod Ketidakhadiran' : `Rekod Ketidakhadiran (${getSessionLabel(targetSession)})`}</h3>
                             <button onclick="document.getElementById('abs-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
-                        <form onsubmit="saveAbsenceForm(event, '${absId}')" class="space-y-4 text-sm">
+                        <form onsubmit="saveAbsenceForm(event, '${absId}', '${targetSession}')" class="space-y-4 text-sm">
                             <div>
-                                <label class="block font-semibold mb-1">Pilih Guru *</label>
+                                <label class="block font-semibold mb-1">Pilih Guru (${getSessionLabel(targetSession)}) *</label>
                                 <select id="abs-teacher" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                    ${store.teachers.map(t => `<option value="${t.id}" ${abs && abs.teacherId === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
+                                    ${(sessionTeachers.length > 0 ? sessionTeachers : store.teachers).map(t => `<option value="${t.id}" ${abs && abs.teacherId === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
@@ -2830,10 +2978,11 @@
             `;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
-        function saveAbsenceForm(e, absId) {
+        function saveAbsenceForm(e, absId, sessionParam = null) {
             e.preventDefault();
             const teacherId = document.getElementById('abs-teacher').value;
             const teacher = store.teachers.find(t => t.id === teacherId);
+            const activeSession = sessionParam || (teacher ? teacher.session : store.schoolSession) || 'pagi';
             const date = document.getElementById('abs-date').value;
             const reason = document.getElementById('abs-reason').value;
             const entryYear = getYearFromDate(date);
@@ -2841,13 +2990,14 @@
             if (absId && absId !== 'null') {
                 const abs = store.absences.find(a => a.id === absId);
                 if (abs) {
-                    Object.assign(abs, { teacherId, teacherName: teacher ? teacher.name : '', date, reason, year: entryYear });
+                    Object.assign(abs, { teacherId, teacherName: teacher ? teacher.name : '', date, reason, year: entryYear, session: activeSession });
                     absObj = abs;
                 }
             } else {
                 absObj = {
                     id: 'ABS-' + Date.now(),
                     year: entryYear,
+                    session: activeSession,
                     teacherId,
                     teacherName: teacher ? teacher.name : '',
                     date,
@@ -2858,49 +3008,66 @@
             }
             pushToBackend('saveAbsence', absObj);
             document.getElementById('abs-modal').remove();
-            autoUpdateReliefFromAbsences(date);
+            autoUpdateReliefFromAbsences(date, activeSession);
             renderApp();
-            showToast("Rekod ketidakhadiran & jadual ganti berjaya dikemaskini!", "success");
+            showToast(`Rekod ketidakhadiran & jadual ganti (${getSessionLabel(activeSession)}) dikemaskini!`, "success");
         }
         function confirmDeleteAbsence(absId) {
             showConfirm("Padam Rekod Ketidakhadiran", "Adakah anda pasti untuk memadam rekod ketidakhadiran ini?", () => {
                 const absObj = store.absences.find(a => a.id === absId);
                 const absDate = absObj ? absObj.date : store.absentFilterDate;
+                const absSession = absObj ? (absObj.session || store.schoolSession) : store.schoolSession;
                 store.absences = store.absences.filter(a => a.id !== absId);
                 pushToBackend('deleteAbsence', { id: absId });
-                autoUpdateReliefFromAbsences(absDate);
+                autoUpdateReliefFromAbsences(absDate, absSession);
                 renderApp();
                 showToast("Rekod ketidakhadiran dipadam dan jadual ganti dikemaskini.", "success");
             });
         }
-        function autoUpdateReliefFromAbsences(targetDate) {
+        function autoUpdateReliefFromAbsences(targetDate, targetSession = null) {
+            const activeSession = targetSession || store.schoolSession || 'pagi';
             const targetYear = getYearFromDate(targetDate);
             const targetWeekId = detectWeekIdFromDate(targetDate);
             const dayName = getDayNameFromDate(targetDate);
-            const absentForDate = store.absences.filter(a => Number(a.year || getYearFromDate(a.date)) === Number(targetYear) && a.date === targetDate);
-            store.reliefList = store.reliefList.filter(r => !(Number(r.year || getYearFromDate(r.date)) === Number(targetYear) && r.date === targetDate));
+            const absentForDate = store.absences.filter(a => 
+                Number(a.year || getYearFromDate(a.date)) === Number(targetYear) && 
+                (a.session || 'pagi') === activeSession && 
+                a.date === targetDate
+            );
+            store.reliefList = store.reliefList.filter(r => !(
+                Number(r.year || getYearFromDate(r.date)) === Number(targetYear) && 
+                (r.session || 'pagi') === activeSession && 
+                r.date === targetDate
+            ));
             if (absentForDate.length === 0) {
-                pushToBackend('syncReliefDate', { date: targetDate, year: targetYear, reliefs: [] });
+                pushToBackend('syncReliefDate', { date: targetDate, year: targetYear, session: activeSession, reliefs: [] });
                 return;
             }
             
+            const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === activeSession);
             let updatedReliefs = [];
             absentForDate.forEach(abs => {
-                const teacherSlots = store.timetable.filter(tt => Number(tt.year || 2026) === Number(targetYear) && tt.teacherName === abs.teacherName && tt.day === dayName);
+                const teacherSlots = store.timetable.filter(tt => 
+                    Number(tt.year || 2026) === Number(targetYear) && 
+                    (tt.session || 'pagi') === activeSession &&
+                    tt.teacherName === abs.teacherName && 
+                    tt.day === dayName
+                );
                 teacherSlots.forEach(slotItem => {
                     const timeSlotObj = store.timeSlots.find(ts => ts.slot === slotItem.slot);
-                    const slotTimeStr = timeSlotObj ? timeSlotObj.time : '08:00 - 08:30';
-                    const availableTeachers = store.teachers.filter(t => 
+                    const slotTimeStr = timeSlotObj ? timeSlotObj.time : (activeSession === 'petang' ? '13:10 - 13:40' : '08:00 - 08:30');
+                    const availableTeachers = sessionTeachers.filter(t => 
                         t.name !== abs.teacherName && 
                         !absentForDate.some(a => a.teacherName === t.name) &&
-                        !store.timetable.some(tt => Number(tt.year || 2026) === Number(targetYear) && tt.teacherName === t.name && tt.day === dayName && tt.slot === slotItem.slot)
+                        !store.timetable.some(tt => Number(tt.year || 2026) === Number(targetYear) && (tt.session || 'pagi') === activeSession && tt.teacherName === t.name && tt.day === dayName && tt.slot === slotItem.slot)
                     );
                     const substitute = availableTeachers.length > 0 
                         ? availableTeachers[Math.floor(Math.random() * availableTeachers.length)]
-                        : store.teachers.find(t => t.name !== abs.teacherName) || { id: 'T99', name: 'Guru Bebas' };
+                        : sessionTeachers.find(t => t.name !== abs.teacherName) || { id: 'T99', name: 'Guru Bebas' };
                     updatedReliefs.push({
                         id: 'REL-' + Date.now() + Math.floor(Math.random() * 1000),
                         year: targetYear,
+                        session: activeSession,
                         absentTeacherId: abs.teacherId,
                         absentTeacher: abs.teacherName,
                         date: targetDate,
@@ -2917,21 +3084,28 @@
                 });
             });
             store.reliefList = store.reliefList.concat(updatedReliefs);
-            pushToBackend('syncReliefDate', { date: targetDate, year: targetYear, reliefs: updatedReliefs });
+            pushToBackend('syncReliefDate', { date: targetDate, year: targetYear, session: activeSession, reliefs: updatedReliefs });
         }
         
-        // 3.5 GURU GANTI 
+        // 3.5 GURU GANTI (PECAHAN SESI PAGI & SESI PETANG)
         function renderReliefManagement() {
-            const yearReliefs = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && r.date === store.selectedReliefGenDate);
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+            const yearReliefs = store.reliefList.filter(r => 
+                Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && 
+                (r.session || 'pagi') === curSession &&
+                r.date === store.selectedReliefGenDate
+            );
             const currentSchool = store.currentUser.data;
             return `
                 <div class="space-y-6">
+                    ${renderSessionSwitcherBanner(`Penjadualan guru ganti automatik, manual & WhatsApp bagi ${sessionLabel}.`)}
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <h3 class="font-bold text-slate-800 text-base flex items-center">
-                                <i class="fas fa-cogs text-brand-600 mr-2"></i> Penjadualan Guru Ganti (${store.selectedYear})
+                                <i class="fas fa-cogs text-brand-600 mr-2"></i> Penjadualan Guru Ganti - ${sessionLabel} (${store.selectedYear})
                             </h3>
-                            <p class="text-xs text-slate-500">Menjana guru ganti bagi SETIAP masa/slot guru tidak hadir pada tarikh pilihan.</p>
+                            <p class="text-xs text-slate-500">Menjana guru ganti bagi SETIAP masa/slot guru tidak hadir (${sessionLabel.toLowerCase()}) pada tarikh pilihan.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                             <div class="flex items-center space-x-2">
@@ -2953,10 +3127,10 @@
                         <div class="p-5 border-b bg-slate-50/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                             <div>
                                 <h4 class="font-extrabold text-slate-900 text-base uppercase tracking-wide">${currentSchool.name || 'SK SERI BINTANG'}</h4>
-                                <p class="text-xs text-slate-600 font-semibold">LAPORAN JADUAL LANTIKAN GURU GANTI HARIAN</p>
+                                <p class="text-xs text-slate-600 font-semibold">LAPORAN JADUAL LANTIKAN GURU GANTI HARIAN (${sessionLabel.toUpperCase()})</p>
                             </div>
                             <div class="text-right">
-                                <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1 rounded-full">Tarikh: ${store.selectedReliefGenDate}</span>
+                                <span class="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1 rounded-full">${sessionLabel} | Tarikh: ${store.selectedReliefGenDate}</span>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -2996,7 +3170,7 @@
                                         </tr>
                                     `).join('') : `
                                         <tr>
-                                            <td colspan="6" class="p-6 text-center text-xs text-slate-400 italic">Tiada rekod guru ganti dijana untuk tarikh ini (${store.selectedReliefGenDate}). Sila tekan "Menjana jadual guru ganti".</td>
+                                            <td colspan="6" class="p-6 text-center text-xs text-slate-400 italic">Tiada rekod guru ganti (${sessionLabel}) dijana untuk tarikh ini (${store.selectedReliefGenDate}). Sila tekan "Menjana jadual guru ganti".</td>
                                         </tr>
                                     `}
                                 </tbody>
@@ -3009,7 +3183,7 @@
                             <div>
                                 <div class="text-center border-b-2 border-slate-900 pb-3 mb-4">
                                     <h2 class="text-base font-extrabold uppercase tracking-wide text-slate-900">${currentSchool.name || 'SK SERI BINTANG'}</h2>
-                                    <p class="text-[11px] font-bold text-brand-700 uppercase tracking-wider">JADUAL GURU GANTI HARIAN</p>
+                                    <p class="text-[11px] font-bold text-brand-700 uppercase tracking-wider">JADUAL GURU GANTI HARIAN (${sessionLabel.toUpperCase()})</p>
                                     <p class="text-[10px] text-slate-600 font-semibold mt-0.5">Tarikh: ${store.selectedReliefGenDate} | Hari: ${getDayNameFromDate(store.selectedReliefGenDate)}</p>
                                 </div>
                                 <table class="w-full border-collapse border border-slate-300 text-[10px] mb-4">
@@ -3034,7 +3208,7 @@
                                             </tr>
                                         `).join('') : `
                                             <tr>
-                                                <td colspan="4" class="border border-slate-300 p-4 text-center italic text-slate-400">Tiada rekod jadual ganti bagi tarikh ini.</td>
+                                                <td colspan="4" class="border border-slate-300 p-4 text-center italic text-slate-400">Tiada rekod jadual ganti (${sessionLabel}) bagi tarikh ini.</td>
                                             </tr>
                                         `}
                                     </tbody>
@@ -3044,7 +3218,7 @@
                                 <div class="space-y-6">
                                     <p>Disemak Oleh:</p>
                                     <div class="border-b border-slate-400 w-24"></div>
-                                    <p class="font-bold uppercase">( PK PENTADBIRAN )</p>
+                                    <p class="font-bold uppercase">( ${curSession === 'petang' ? 'PK PETANG' : 'PK PENTADBIRAN'} )</p>
                                 </div>
                                 <div class="space-y-6">
                                     <p>Disahkan Oleh:</p>
@@ -3058,39 +3232,47 @@
             `;
         }
         function exportReliefPNG() {
+            const curSession = store.schoolSession || 'pagi';
             const pngTarget = document.getElementById('relief-png-container');
             pngTarget.parentElement.classList.remove('hidden');
-            showToast("Menjana gambar PNG WhatsApp (9:16)...", "info");
+            showToast(`Menjana gambar PNG WhatsApp 9:16 (${getSessionLabel(curSession)})...`, "info");
             
             html2canvas(pngTarget, { scale: 2 }).then(canvas => {
                 pngTarget.parentElement.classList.add('hidden');
                 const link = document.createElement('a');
-                link.download = `Jadual_Guru_Ganti_WhatsApp_9-16_${store.selectedReliefGenDate}.png`;
+                link.download = `Jadual_Guru_Ganti_${curSession.toUpperCase()}_9-16_${store.selectedReliefGenDate}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 showToast("Gambar PNG 9:16 Jadual Guru Ganti berjaya dimuat turun!", "success");
             });
         }
         function autoGenerateReliefSchedule() {
+            const curSession = store.schoolSession || 'pagi';
             const dateStr = store.selectedReliefGenDate;
-            autoUpdateReliefFromAbsences(dateStr);
-            const count = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && r.date === dateStr).length;
+            autoUpdateReliefFromAbsences(dateStr, curSession);
+            const count = store.reliefList.filter(r => 
+                Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && 
+                (r.session || 'pagi') === curSession &&
+                r.date === dateStr
+            ).length;
             if (count === 0) {
-                showToast(`Tiada slot pengajaran guru tidak hadir dikesan pada tarikh ${dateStr}.`, "info");
+                showToast(`Tiada slot pengajaran guru tidak hadir (${getSessionLabel(curSession)}) dikesan pada tarikh ${dateStr}.`, "info");
             } else {
-                showToast(`Jadual Guru Ganti Berjaya Dijana! (${count} slot diliputi).`, "success");
+                showToast(`Jadual Guru Ganti (${getSessionLabel(curSession)}) Berjaya Dijana! (${count} slot diliputi).`, "success");
             }
             renderApp();
         }
         function openManualSubstituteModal(relId) {
             const rel = store.reliefList.find(r => r.id === relId);
+            const relSession = rel.session || store.schoolSession || 'pagi';
+            const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === relSession && t.name !== rel.absentTeacher);
             const modalHtml = `
                 <div id="sub-manual-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl">
-                        <h3 class="font-bold text-slate-900 mb-2">Tukar Guru Ganti Manual</h3>
+                        <h3 class="font-bold text-slate-900 mb-2">Tukar Guru Ganti Manual (${getSessionLabel(relSession)})</h3>
                         <p class="text-xs text-slate-500 mb-4">Slot: ${rel.slot} (${rel.time || ''}) | Kelas: ${rel.className}</p>
                         <select id="manual-sub-teacher" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-4 font-semibold">
-                            ${store.teachers.filter(t => t.name !== rel.absentTeacher).map(t => `<option value="${t.id}" ${rel.substituteName === t.name ? 'selected' : ''}>${t.name}</option>`).join('')}
+                            ${(sessionTeachers.length > 0 ? sessionTeachers : store.teachers.filter(t => t.name !== rel.absentTeacher)).map(t => `<option value="${t.id}" ${rel.substituteName === t.name ? 'selected' : ''}>${t.name}</option>`).join('')}
                         </select>
                         <div class="flex justify-end space-x-2">
                             <button onclick="document.getElementById('sub-manual-modal').remove()" class="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-lg">Batal</button>
@@ -3119,10 +3301,11 @@
             const teacher = store.teachers.find(t => t.name === rel.substituteName);
             const schoolName = store.currentUser.data.name || "Sekolah";
             const phone = teacher ? teacher.phone : '60123456789';
+            const relSessionLabel = getSessionLabel(rel.session || store.schoolSession);
             
             const msg = encodeURIComponent(
                 `Salam & Salam Sejahtera Cikgu ${rel.substituteName},\n\n` +
-                `Lantikan Guru Ganti - ${schoolName}\n` +
+                `Lantikan Guru Ganti (${relSessionLabel}) - ${schoolName}\n` +
                 `• Tarikh: ${rel.date}\n` +
                 `• Slot / Masa: ${rel.slot} (${rel.time || ''})\n` +
                 `• Kelas & Subjek: ${rel.className} (${rel.subject})\n` +
@@ -3132,15 +3315,18 @@
             window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
         }
         
-        // ANALISIS BEBANAN MASA MENGAJAR & WAKTU GANTI GURU
+        // ANALISIS BEBANAN MASA MENGAJAR & WAKTU GANTI GURU (PECAHAN SESI)
         function renderTeacherWorkloadSection() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
+            const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
             const selectedWeekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
             return `
                 <div class="space-y-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-balance-scale text-brand-600 mr-2"></i>Analisis Bebanan Masa Mengajar & Waktu Ganti Guru (Tahun ${store.selectedYear})</h3>
-                            <p class="text-xs text-slate-500">Masa mengajar hakiki dan masa ganti disinkronkan secara langsung dengan Tahun <span class="font-bold text-brand-600">${store.selectedYear}</span>.</p>
+                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-balance-scale text-brand-600 mr-2"></i>Analisis Bebanan Guru - ${sessionLabel} (Tahun ${store.selectedYear})</h3>
+                            <p class="text-xs text-slate-500">Masa mengajar hakiki dan masa ganti bagi guru <span class="font-bold text-brand-600">${sessionLabel} (${store.selectedYear})</span>.</p>
                         </div>
                         <div class="flex items-center space-x-2">
                             <button onclick="toggleAllWeeksWorkloadView()" class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${store.viewAllWeeksWorkload ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
@@ -3160,7 +3346,7 @@
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 border-b text-slate-500 text-xs uppercase font-bold">
                                 <tr>
-                                    <th class="p-3">Nama Guru</th>
+                                    <th class="p-3">Nama Guru (${sessionLabel})</th>
                                     <th class="p-3">Masa Mengajar Hakiki (${store.selectedYear})</th>
                                     <th class="p-3">
                                         ${store.viewAllWeeksWorkload ? `Masa Ganti (Keseluruhan ${store.selectedYear})` : `Masa Ganti (${selectedWeekObj.name} - ${store.selectedYear})`}
@@ -3169,10 +3355,11 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                ${store.teachers.map((t) => {
-                                    const hakikiCount = getTeacherHakikiSlotsForYear(t, store.selectedYear);
+                                ${sessionTeachers.length > 0 ? sessionTeachers.map((t) => {
+                                    const hakikiCount = getTeacherHakikiSlotsForYear(t, store.selectedYear, curSession);
                                     const reliefCount = store.reliefList.filter(r => 
                                         Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) &&
+                                        (r.session || 'pagi') === curSession &&
                                         r.substituteName === t.name && 
                                         (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
                                     ).length;
@@ -3184,7 +3371,7 @@
                                             <td class="p-3 font-extrabold text-slate-900">${hakikiCount + reliefCount} Waktu</td>
                                         </tr>
                                     `;
-                                }).join('')}
+                                }).join('') : `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-400 italic">Tiada guru berdaftar dalam ${sessionLabel}.</td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -3204,17 +3391,24 @@
             showToast(`Melihat rekod bebanan guru untuk ${w ? w.name : weekId} (${store.selectedYear})`);
         }
         
-        // LAPORAN RASMI LANTIKAN GURU GANTI
+        // LAPORAN RASMI LANTIKAN GURU GANTI (PECAHAN SESI PAGI & SESI PETANG)
         function renderReportTab() {
+            const curSession = store.schoolSession || 'pagi';
+            const sessionLabel = getSessionLabel(curSession);
             const currentSchool = store.currentUser.data;
             const weekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
-            const filteredReliefList = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId));
+            const filteredReliefList = store.reliefList.filter(r => 
+                Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && 
+                (r.session || 'pagi') === curSession &&
+                (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
+            );
             return `
                 <div class="space-y-6">
+                    ${renderSessionSwitcherBanner(`Laporan rasmi lantikan guru ganti bagi ${sessionLabel}.`)}
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-file-alt text-brand-600 mr-2"></i>Laporan Rasmi Lantikan Guru Ganti (${store.selectedYear})</h3>
-                            <p class="text-xs text-slate-500">Eksport laporan format 9:16 PNG mengikut masa tepat jadual.</p>
+                            <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-file-alt text-brand-600 mr-2"></i>Laporan Rasmi Lantikan Guru Ganti - ${sessionLabel} (${store.selectedYear})</h3>
+                            <p class="text-xs text-slate-500">Eksport laporan format 9:16 PNG mengikut masa tepat jadual (${sessionLabel.toLowerCase()}).</p>
                         </div>
                         <div class="flex items-center space-x-3">
                             <select onchange="changeWorkloadWeek(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-600">
@@ -3234,7 +3428,7 @@
                                 <p class="text-[10px] text-slate-500">Kod: ${currentSchool.code || 'WBA0001'} | Tel: ${currentSchool.phone || '03-92841122'}</p>
                             </div>
                             <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                                <span>LAPORAN JADUAL GURU GANTI HARIAN</span>
+                                <span>LAPORAN GURU GANTI (${sessionLabel.toUpperCase()})</span>
                                 <span class="text-brand-700 font-mono">${weekObj.name.toUpperCase()} (${store.selectedYear})</span>
                             </div>
                             <div class="overflow-x-auto">
@@ -3264,7 +3458,7 @@
                                             </tr>
                                         `).join('') : `
                                             <tr>
-                                                <td colspan="6" class="border border-slate-300 p-3 text-center italic text-slate-500">Tiada rekod laporan ganti bagi minggu ini (${weekObj.name}).</td>
+                                                <td colspan="6" class="border border-slate-300 p-3 text-center italic text-slate-500">Tiada rekod laporan ganti (${sessionLabel}) bagi minggu ini (${weekObj.name}).</td>
                                             </tr>
                                         `}
                                     </tbody>
@@ -3275,7 +3469,7 @@
                                     <p>Disemak Oleh:</p>
                                     <div class="border-b border-slate-400 w-28"></div>
                                     <div>
-                                        <p class="font-bold uppercase">( PK PENTADBIRAN )</p>
+                                        <p class="font-bold uppercase">( ${curSession === 'petang' ? 'PK PETANG' : 'PK PENTADBIRAN'} )</p>
                                     </div>
                                 </div>
                                 <div class="space-y-6">
@@ -3292,11 +3486,12 @@
             `;
         }
         function exportReportPNG916() {
+            const curSession = store.schoolSession || 'pagi';
             const reportElement = document.getElementById('printable-report');
-            showToast("Menjana gambar PNG (Aspect Ratio 9:16)...", "info");
+            showToast(`Menjana gambar PNG 9:16 (${getSessionLabel(curSession)})...`, "info");
             html2canvas(reportElement, { scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Laporan_Guru_Ganti_${store.selectedWeekId}_${store.selectedYear}.png`;
+                link.download = `Laporan_Guru_Ganti_${curSession.toUpperCase()}_${store.selectedWeekId}_${store.selectedYear}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 showToast("Gambar PNG 9:16 berjaya dimuat turun!", "success");
@@ -3304,7 +3499,7 @@
         }
         
         // ==========================================
-        // 3. PAPARAN GURU (KEKALKAN SEMUA FUNGSI)
+        // 4. PAPARAN GURU (KEKALKAN SEMUA FUNGSI)
         // ==========================================
         function renderTeacherView() {
             const currentTeacher = store.currentUser.data;
@@ -3312,6 +3507,8 @@
             const weekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
             
             const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
+            const teacherSession = realTeacherObj.session || 'pagi';
+            const relevantSlots = store.timeSlots.filter(s => (s.session || (String(s.slot).startsWith('P') ? 'petang' : 'pagi')) === teacherSession);
             
             const activeYear = store.selectedYear;
             const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
@@ -3344,8 +3541,11 @@
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h2 class="text-xl font-extrabold text-slate-800">Selamat Datang, ${realTeacherObj.name}</h2>
-                            <p class="text-xs text-slate-500">ID IC: ${realTeacherObj.ic} | Subjek: ${realTeacherObj.subjects ? realTeacherObj.subjects.join(', ') : 'Guru'} | Tahun Semasa: <span class="font-bold text-brand-600">${activeYear}</span></p>
+                            <div class="flex items-center space-x-2">
+                                <h2 class="text-xl font-extrabold text-slate-800">Selamat Datang, ${realTeacherObj.name}</h2>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${teacherSession === 'petang' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${getSessionLabel(teacherSession)}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">ID IC: ${realTeacherObj.ic} | Subjek: ${realTeacherObj.subjects ? realTeacherObj.subjects.join(', ') : 'Guru'} | Tahun Semasa: <span class="font-bold text-brand-600">${activeYear}</span></p>
                         </div>
                         <button onclick="openTeacherSelfAbsenceModal()" class="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center space-x-2">
                             <i class="fas fa-user-times"></i><span>Isi Rekod Ketidakhadiran Saya</span>
@@ -3423,90 +3623,89 @@
                                 <p class="text-[11px] text-slate-500 mt-0.5">Jumlah Mingguan (${activeYear}): <span class="font-bold">${hakikiSlotsWeekly} Waktu</span></p>
                             </div>
                             <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti (${selectedDayName})</p>
-                                <p class="text-2xl font-extrabold text-amber-600">${reliefOnSelectedDay} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Tarikh: ${store.teacherDutyDate}</p>
-                            </div>
-                            <div class="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti (${weekObj.name})</p>
-                                <p class="text-2xl font-extrabold text-purple-600">${currentReliefSlotsInWeek} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Tahun ${activeYear}</p>
+                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti Hari Ini (${selectedDayName})</p>
+                                <p class="text-2xl font-extrabold text-amber-700">${reliefOnSelectedDay} Waktu</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Minggu Ini (${weekObj.name}): <span class="font-bold">${currentReliefSlotsInWeek} Waktu</span></p>
                             </div>
                             <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Bebanan (${selectedDayName})</p>
+                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Bebanan Hari Ini</p>
                                 <p class="text-2xl font-extrabold text-emerald-700">${hakikiSlotsDaily + reliefOnSelectedDay} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Hakiki + Ganti Hari Ini</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">${selectedDayName}, ${store.teacherDutyDate}</p>
+                            </div>
+                            <div class="p-4 bg-purple-50 border border-purple-100 rounded-xl">
+                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Mingguan (${weekObj.name})</p>
+                                <p class="text-2xl font-extrabold text-purple-700">${hakikiSlotsWeekly + currentReliefSlotsInWeek} Waktu</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Hakiki (${hakikiSlotsWeekly}) + Ganti (${currentReliefSlotsInWeek})</p>
                             </div>
                         </div>
+
                         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                             <p class="text-xs font-bold text-slate-700 mb-2 flex items-center">
-                                <i class="fas fa-chalkboard text-brand-600 mr-1.5"></i>Slot Mengajar Hakiki Anda Pada Hari ${selectedDayName} (Jadual Waktu Induk Sekolah):
+                                <i class="fas fa-calendar-day text-brand-600 mr-1.5"></i>Slot Mengajar Hakiki Anda Pada Hari ${selectedDayName} (Jadual Induk ${activeYear}):
                             </p>
                             ${myTodayMasterSlots.length > 0 ? `
                                 <div class="flex flex-wrap gap-2">
-                                    ${myTodayMasterSlots.map(s => {
-                                        const tsObj = store.timeSlots.find(t => t.slot === s.slot);
+                                    ${myTodayMasterSlots.map(ms => {
+                                        const ts = store.timeSlots.find(s => s.slot === ms.slot);
                                         return `
-                                            <span class="inline-flex items-center space-x-1.5 px-3 py-1 bg-white border border-brand-200 rounded-lg text-xs shadow-sm">
-                                                <span class="font-mono font-extrabold text-brand-700">${s.slot}</span>
-                                                <span class="text-slate-400 text-[10px]">(${tsObj ? tsObj.time : ''})</span>
-                                                <span class="font-bold text-slate-800">• ${s.className} (${s.subject})</span>
+                                            <span class="px-3 py-1.5 bg-white border border-brand-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm">
+                                                <span class="font-mono font-bold text-brand-700">${ms.slot}</span> (${ts ? ts.time : ''}) • <span class="font-bold">${ms.className}</span> - ${ms.subject}
                                             </span>
                                         `;
                                     }).join('')}
                                 </div>
-                            ` : `<p class="text-xs text-slate-400 italic">Tiada slot mengajar hakiki direkodkan dalam Jadual Waktu Induk Sekolah untuk hari ${selectedDayName}.</p>`}
+                            ` : `
+                                <p class="text-xs text-slate-400 italic">Tiada slot hakiki direkodkan dalam Jadual Induk pada hari ${selectedDayName} (${activeYear}).</p>
+                            `}
                         </div>
-                        
-                        <div class="h-60">
-                            <canvas id="singleTeacherWorkloadChart"></canvas>
+                        <div class="h-44">
+                            <canvas id="teacherSelfChart"></canvas>
                         </div>
                     </div>
                     
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                        <div class="flex justify-between items-center border-b pb-3">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-base"><i class="fas fa-calendar-alt text-brand-600 mr-2"></i>Jadual Waktu Induk Sekolah (${activeYear})</h3>
-                                <p class="text-xs text-slate-500">${store.teacherCanEditSchedule ? 'Anda dibenarkan oleh Admin Sekolah untuk mengemaskini jadual.' : 'Mod Lihat Sahaja (Kebenaran Mengemaskini Ditolak oleh Admin).'}</p>
+                                <h3 class="font-bold text-slate-800 text-base">Jadual Waktu Mengajar Peribadi (${activeYear})</h3>
+                                <p class="text-xs text-slate-500">Status Kebenaran Kemaskini: <span class="font-bold ${store.teacherCanEditSchedule ? 'text-emerald-600' : 'text-red-500'}">${store.teacherCanEditSchedule ? 'guru boleh kemaskini' : 'guru tidak dibenarkan kemaskini'}</span></p>
                             </div>
                             ${store.teacherCanEditSchedule ? `
-                                <button onclick="openAddSlotModal()" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md">
-                                    Kemaskini jadual
+                                <button onclick="openAddSlotModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center space-x-2">
+                                    <i class="fas fa-plus"></i><span>Tambah / Kemaskini Jadual</span>
                                 </button>
                             ` : ''}
                         </div>
-                        
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse text-xs">
                                 <thead>
-                                    <tr class="bg-slate-100 border-b border-slate-200">
-                                        <th class="p-3 border border-slate-200 text-slate-700 font-extrabold uppercase w-28">Masa / Hari</th>
-                                        ${days.map(day => `<th class="p-3 border border-slate-200 text-center font-extrabold ${day === selectedDayName ? 'bg-amber-100 text-amber-900 border-amber-300' : 'text-slate-800'}">${day} ${day === selectedDayName ? '★ (Hari Semasa)' : ''}</th>`).join('')}
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="p-3 border border-slate-200 text-slate-500 font-bold uppercase w-24">Masa</th>
+                                        ${days.map(day => `<th class="p-3 border border-slate-200 text-center font-extrabold ${day === selectedDayName ? 'bg-amber-100 text-amber-900' : 'text-slate-700'}">${day} ${day === selectedDayName ? '(Hari Ini)' : ''}</th>`).join('')}
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${store.timeSlots.map(slot => `
+                                    ${(relevantSlots.length > 0 ? relevantSlots : store.timeSlots).map(slot => `
                                         <tr>
-                                            <td class="p-2 border border-slate-200 font-bold bg-slate-50 text-brand-700 font-mono text-center">
+                                            <td class="p-2 border border-slate-200 font-bold bg-slate-50 text-brand-600 font-mono text-center">
                                                 <div>${slot.slot}</div>
-                                                <div class="text-[10px] text-slate-400">${slot.time}</div>
+                                                <div class="text-[10px] text-slate-400 font-normal">${slot.time}</div>
                                             </td>
                                             ${days.map(day => {
-                                                const matchEntries = store.timetable.filter(tt => Number(tt.year || 2026) === Number(activeYear) && tt.day === day && tt.slot === slot.slot);
-                                                const isTodayCol = day === selectedDayName;
+                                                const match = store.timetable.find(tt => 
+                                                    Number(tt.year || 2026) === Number(activeYear) &&
+                                                    tt.teacherName.trim().toLowerCase() === realTeacherObj.name.trim().toLowerCase() && 
+                                                    tt.day === day && 
+                                                    tt.slot === slot.slot
+                                                );
                                                 return `
-                                                    <td class="p-2 border border-slate-200 text-center align-top min-w-[140px] ${isTodayCol ? 'bg-amber-50/40' : 'bg-white'} hover:bg-slate-50 transition-colors">
-                                                        ${matchEntries.length > 0 ? matchEntries.map(e => {
-                                                            const isMe = e.teacherName === realTeacherObj.name;
-                                                            return `
-                                                                <div class="p-2 mb-1.5 ${isMe ? 'bg-brand-100 border-brand-400 ring-2 ring-brand-500/30' : 'bg-slate-50 border-slate-200'} border rounded-xl text-left relative group">
-                                                                    ${store.teacherCanEditSchedule ? `<button onclick="deleteTimetableEntry('${e.id}')" class="absolute top-1 right-1 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"><i class="fas fa-times"></i></button>` : ''}
-                                                                    <p class="font-extrabold ${isMe ? 'text-brand-900' : 'text-slate-800'}">${e.subject}</p>
-                                                                    <p class="text-[11px] font-bold text-slate-700">${e.className}</p>
-                                                                    <p class="text-[10px] text-slate-500 font-semibold truncate"><i class="fas fa-user-circle mr-1"></i>${e.teacherName}</p>
-                                                                </div>
-                                                            `;
-                                                        }).join('') : '<span class="text-slate-300 italic text-[11px]">-</span>'}
+                                                    <td class="p-2 border border-slate-200 text-center align-middle h-16 ${day === selectedDayName ? 'bg-amber-50/30' : ''}">
+                                                        ${match ? `
+                                                            <div class="p-2 bg-brand-50 border border-brand-200 rounded-xl relative group">
+                                                                ${store.teacherCanEditSchedule ? `<button onclick="deleteTimetableEntry('${match.id}')" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow"><i class="fas fa-times"></i></button>` : ''}
+                                                                <p class="font-bold text-brand-800">${match.subject}</p>
+                                                                <p class="text-[11px] font-semibold text-slate-600">${match.className}</p>
+                                                            </div>
+                                                        ` : '<span class="text-slate-300">-</span>'}
                                                     </td>
                                                 `;
                                             }).join('')}
@@ -3519,43 +3718,48 @@
                 </div>
             `;
         }
-        function confirmTeacherDuty(relId) {
-            const rel = store.reliefList.find(r => r.id === relId);
-            if (rel) {
-                rel.confirmedBySubstitute = true;
-                rel.status = "Disahkan";
-                pushToBackend('saveRelief', rel);
-                renderApp();
-                showToast("Tugas guru ganti berjaya disahkan!", "success");
-            }
-        }
         function changeTeacherDutyDate(d) {
             store.teacherDutyDate = d;
             store.selectedYear = getYearFromDate(d);
             store.selectedWeekId = detectWeekIdFromDate(d);
             renderApp();
-            showToast(`Disinkronkan: ${d} (${getDayNameFromDate(d)} | ${store.selectedWeekId} | Tahun ${store.selectedYear}).`);
+        }
+        function confirmTeacherDuty(relId) {
+            const rel = store.reliefList.find(r => r.id === relId);
+            if (rel) {
+                rel.confirmedBySubstitute = true;
+                rel.status = 'Disahkan';
+                pushToBackend('saveRelief', rel);
+                renderApp();
+                showToast("Tugas guru ganti anda berjaya disahkan!", "success");
+            }
         }
         function openTeacherSelfAbsenceModal() {
+            const currentTeacher = store.currentUser.data;
+            const teacherSession = currentTeacher.session || 'pagi';
             const modalHtml = `
-                <div id="teacher-self-abs-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div id="self-abs-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-slate-900">Borang Ketidakhadiran Guru</h3>
-                            <button onclick="document.getElementById('teacher-self-abs-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                            <h3 class="font-bold text-slate-900">Maklum Ketidakhadiran Saya</h3>
+                            <button onclick="document.getElementById('self-abs-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                         </div>
                         <form onsubmit="saveTeacherSelfAbsence(event)" class="space-y-4 text-sm">
                             <div>
-                                <label class="block font-semibold mb-1">Tarikh Ketidakhadiran *</label>
-                                <input type="date" id="t-abs-date" required value="${store.teacherDutyDate}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                <label class="block font-semibold mb-1">Nama Guru</label>
+                                <input type="text" disabled value="${currentTeacher.name} (${getSessionLabel(teacherSession)})" class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-600">
                             </div>
                             <div>
-                                <label class="block font-semibold mb-1">Sebab Ketidakhadiran (Secara Bertulis) *</label>
-                                <textarea id="t-abs-reason" required rows="3" placeholder="Sila tulis sebab ketidakhadiran anda secara terperinci..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"></textarea>
+                                <label class="block font-semibold mb-1">Tarikh Ketidakhadiran *</label>
+                                <input type="date" id="self-abs-date" required value="${store.teacherDutyDate}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Sebab Ketidakhadiran *</label>
+                                <textarea id="self-abs-reason" required rows="2" placeholder="Sila nyatakan sebab ketidakhadiran..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"></textarea>
                             </div>
                             <div class="flex justify-end space-x-3 pt-4 border-t">
-                                <button type="button" onclick="document.getElementById('teacher-self-abs-modal').remove()" class="px-4 py-2 text-slate-600 bg-slate-100 rounded-xl font-bold">Batal</button>
-                                <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-xl font-bold shadow-md">Hantar Permohonan</button>
+                                <button type="button" onclick="document.getElementById('self-abs-modal').remove()" class="px-4 py-2 text-slate-600 bg-slate-100 rounded-xl font-bold">Batal</button>
+                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl font-bold shadow-md">Hantar Rekod</button>
                             </div>
                         </form>
                     </div>
@@ -3566,12 +3770,14 @@
         function saveTeacherSelfAbsence(e) {
             e.preventDefault();
             const currentTeacher = store.currentUser.data;
-            const date = document.getElementById('t-abs-date').value;
-            const reason = document.getElementById('t-abs-reason').value;
+            const teacherSession = currentTeacher.session || 'pagi';
+            const date = document.getElementById('self-abs-date').value;
+            const reason = document.getElementById('self-abs-reason').value;
             const entryYear = getYearFromDate(date);
             const absObj = {
                 id: 'ABS-' + Date.now(),
                 year: entryYear,
+                session: teacherSession,
                 teacherId: currentTeacher.id,
                 teacherName: currentTeacher.name,
                 date,
@@ -3580,89 +3786,92 @@
             };
             store.absences.push(absObj);
             pushToBackend('saveAbsence', absObj);
-            autoUpdateReliefFromAbsences(date);
-            document.getElementById('teacher-self-abs-modal').remove();
-            showToast("Sebab ketidakhadiran dihantar & jadual ganti dikemaskini!", "success");
+            autoUpdateReliefFromAbsences(date, teacherSession);
+            document.getElementById('self-abs-modal').remove();
             renderApp();
+            showToast("Rekod ketidakhadiran anda telah direkod & dikemaskini!", "success");
         }
         
         // CHART INITIALIZATION
         function initCharts() {
-            const wlCanvas = document.getElementById('teacherWorkloadChart');
-            if (wlCanvas) {
-                new Chart(wlCanvas.getContext('2d'), {
+            const curSession = store.schoolSession || 'pagi';
+            const workloadCtx = document.getElementById('teacherWorkloadChart');
+            if (workloadCtx) {
+                const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
+                const labels = sessionTeachers.map(t => t.name.split(' ')[0]);
+                const hakikiData = sessionTeachers.map(t => getTeacherHakikiSlotsForYear(t, store.selectedYear, curSession));
+                const gantiData = sessionTeachers.map(t => store.reliefList.filter(r => 
+                    Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) &&
+                    (r.session || 'pagi') === curSession &&
+                    r.substituteName === t.name && 
+                    (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
+                ).length);
+                new Chart(workloadCtx, {
                     type: 'bar',
                     data: {
-                        labels: store.teachers.map(t => t.name.split(' ')[0]),
+                        labels: labels,
                         datasets: [
-                            { 
-                                label: `Masa Mengajar Hakiki (${store.selectedYear})`, 
-                                data: store.teachers.map(t => getTeacherHakikiSlotsForYear(t, store.selectedYear)), 
-                                backgroundColor: '#0284c7', 
-                                borderRadius: 6 
-                            },
-                            { 
-                                label: store.viewAllWeeksWorkload ? `Masa Ganti (Keseluruhan ${store.selectedYear})` : `Masa Ganti (${store.selectedWeekId} - ${store.selectedYear})`, 
-                                data: store.teachers.map(t => store.reliefList.filter(r => 
-                                    Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && 
-                                    r.substituteName === t.name && 
-                                    (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
-                                ).length), 
-                                backgroundColor: '#f59e0b', 
-                                borderRadius: 6 
-                            }
+                            { label: `Masa Mengajar Hakiki (${store.selectedYear})`, data: hakikiData, backgroundColor: '#0284c7', borderRadius: 6 },
+                            { label: store.viewAllWeeksWorkload ? `Masa Ganti (${store.selectedYear})` : `Masa Ganti (${store.selectedWeekId})`, data: gantiData, backgroundColor: '#f59e0b', borderRadius: 6 }
                         ]
                     },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                    }
                 });
             }
-            const stCanvas = document.getElementById('singleTeacherWorkloadChart');
-            if (stCanvas && store.currentUser && store.currentUser.role === 'teacher') {
-                const me = store.currentUser.data;
-                const realTeacherObj = store.teachers.find(t => t.id === me.id || t.name === me.name) || me;
-                const daysList = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat'];
+            const selfChartCtx = document.getElementById('teacherSelfChart');
+            if (selfChartCtx && store.currentUser?.role === 'teacher') {
+                const currentTeacher = store.currentUser.data;
+                const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
                 const activeYear = store.selectedYear;
                 const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
-                
-                const hakikiPerDay = daysList.map(dayName => getTeacherHakikiSlotsForDay(realTeacherObj, dayName, activeYear));
-                const reliefPerDay = daysList.map(dayName => {
-                    return store.reliefList.filter(r => 
-                        Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
-                        r.substituteName === realTeacherObj.name &&
-                        (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId &&
-                        getDayNameFromDate(r.date) === dayName
-                    ).length;
-                });
-                new Chart(stCanvas.getContext('2d'), {
+                const reliefToday = store.reliefList.filter(r => 
+                    Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
+                    r.substituteName === realTeacherObj.name &&
+                    r.date === store.teacherDutyDate
+                ).length;
+                const reliefSlotsWeek = store.reliefList.filter(r => 
+                    Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
+                    r.substituteName === realTeacherObj.name &&
+                    (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId
+                ).length;
+                const hakikiWeekly = getTeacherHakikiSlotsForYear(realTeacherObj, activeYear);
+                const hakikiDaily = getTeacherHakikiSlotsForDay(realTeacherObj, selectedDayName, activeYear);
+                new Chart(selfChartCtx, {
                     type: 'bar',
                     data: {
-                        labels: daysList.map(d => d === selectedDayName ? `${d} (Hari Semasa)` : d),
-                        datasets: [
-                            { 
-                                label: `Waktu Hakiki Jadual Induk (${activeYear})`, 
-                                data: hakikiPerDay, 
-                                backgroundColor: daysList.map(d => d === selectedDayName ? '#0369a1' : '#38bdf8'), 
-                                borderRadius: 6 
-                            },
-                            { 
-                                label: `Waktu Ganti (${store.selectedWeekId} - ${activeYear})`, 
-                                data: reliefPerDay, 
-                                backgroundColor: daysList.map(d => d === selectedDayName ? '#d97706' : '#fbbf24'), 
-                                borderRadius: 6 
-                            }
-                        ]
+                        labels: [
+                            `Hakiki Hari Ini (${selectedDayName})`,
+                            `Ganti Hari Ini (${selectedDayName})`,
+                            `Hakiki Mingguan (${activeYear})`,
+                            `Ganti Minggu (${store.selectedWeekId})`
+                        ],
+                        datasets: [{
+                            label: 'Bilangan Waktu',
+                            data: [hakikiDaily, reliefToday, hakikiWeekly, reliefSlotsWeek],
+                            backgroundColor: ['#0284c7', '#f59e0b', '#0f766e', '#7c3aed'],
+                            borderRadius: 8
+                        }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
+                    }
                 });
             }
         }
         
-        // INITIAL STARTUP
-        window.onload = function() {
+        // INITIALIZE APP
+        window.addEventListener('DOMContentLoaded', () => {
             loadLocalBackup();
             renderApp();
             checkAppsScriptConnection(true, false);
-        };
+        });
     </script>
 </body>
 </html>
