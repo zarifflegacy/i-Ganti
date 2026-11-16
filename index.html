@@ -18,7 +18,7 @@
         // ==========================================
         // KONFIGURASI:
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbzC-jVnNTrsm7Iu08f51sgXFE9EWJjvWANbcng-sggs2L_P2CYhYi7X5vs1ZntpiC5bKg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxsdwBhaDwZfCnnljJX3uUGlykoRkw0_igQLUuT-mS-KDj8D_8EAwHcsgOe7uBwIZ9LFg/exec";
         
         tailwind.config = {
             theme: {
@@ -70,7 +70,6 @@
         <i id="toast-icon" class="fas fa-info-circle text-brand-500 text-lg"></i>
         <span id="toast-message" class="text-sm font-medium">Mesej Notifikasi</span>
     </div>
-
     <!-- MODAL CONFIRMATION DIALOG -->
     <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-95 opacity-0" id="confirm-modal-content">
@@ -85,7 +84,6 @@
             </div>
         </div>
     </div>
-
     <!-- MAIN APP SCRIPT LOGIC -->
     <script>
         // Mendapatkan tarikh semasa mengikut zon waktu tempatan
@@ -97,7 +95,6 @@
         }
         const currentYearReal = new Date().getFullYear();
         const todayStr = getLocalTodayStr();
-
         // GLOBAL DATA STORE
         const store = {
             appLogo: "https://placehold.co/120x120/0284c7/ffffff?text=i-Ganti",
@@ -159,9 +156,9 @@
             },
             
             schools: [
-                { id: "SK001", year: 2026, name: "SK Seri Bintang", code: "WBA0001", email: "skseribintang@edu.my", phone: "60123456789", address: "Jalan Anjung Rahmat, Kuala Lumpur", adminName: "Encik Ahmad Razali", ic: "010203040506", pass: "123456", status: "aktif", daysLeft: 180, totalTeachers: 42 },
-                { id: "SK002", year: 2026, name: "SMK Taman Melawati", code: "BEA1072", email: "smktm@edu.my", phone: "60139876543", address: "Taman Melawati, Ampang, Selangor", adminName: "Puan Noraini Yusof", ic: "750512105432", pass: "123456", status: "aktif", daysLeft: 5, totalTeachers: 68 },
-                { id: "SK003", year: 2026, name: "SK Putrajaya Presint 9", code: "BBA8003", email: "skp9@edu.my", phone: "60171122334", address: "Presint 9, W.P Putrajaya", adminName: "Dr. Hamzah Kassim", ic: "720909086111", pass: "123456", status: "tidak_aktif", daysLeft: 0, totalTeachers: 35 }
+                { id: "SK001", year: 2026, name: "SK Seri Bintang", code: "WBA0001", email: "skseribintang@edu.my", phone: "60123456789", address: "Jalan Anjung Rahmat, Kuala Lumpur", adminName: "Encik Ahmad Razali", ic: "010203040506", pass: "123456", status: "aktif", registeredDate: todayStr, initialDays: 180, daysLeft: 180, totalTeachers: 42 },
+                { id: "SK002", year: 2026, name: "SMK Taman Melawati", code: "BEA1072", email: "smktm@edu.my", phone: "60139876543", address: "Taman Melawati, Ampang, Selangor", adminName: "Puan Noraini Yusof", ic: "750512105432", pass: "123456", status: "aktif", registeredDate: todayStr, initialDays: 5, daysLeft: 5, totalTeachers: 68 },
+                { id: "SK003", year: 2026, name: "SK Putrajaya Presint 9", code: "BBA8003", email: "skp9@edu.my", phone: "60171122334", address: "Presint 9, W.P Putrajaya", adminName: "Dr. Hamzah Kassim", ic: "720909086111", pass: "123456", status: "tidak_aktif", registeredDate: todayStr, initialDays: 0, daysLeft: 0, totalTeachers: 35 }
             ],
             payments: [
                 { id: "PAY-1001", year: 2026, schoolCode: "WBA0001", schoolName: "SK Seri Bintang", amount: 650.00, startDate: "2026-01-01", endDate: "2026-12-31", status: "sudah_bayar", fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
@@ -226,6 +223,67 @@
             ]
         };
 
+        // ==========================================
+        // PENGIRAAN AUTOMATIK COUNTDOWN DARI TARIKH BERDAFTAR (TOLAK 1 HARI SETIAP 23:59 PM)
+        // ==========================================
+        function calculateSchoolRemainingDays(school) {
+            if (!school) return 0;
+            const regDateStr = school.registeredDate || getLocalTodayStr();
+            const baseDays = Number(school.initialDays !== undefined ? school.initialDays : (school.daysLeft || 0));
+            const parts = String(regDateStr).split('-').map(Number);
+            if (parts.length !== 3 || isNaN(parts[0])) return Math.max(0, baseDays);
+
+            const regMidnightEnd = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 0, 0);
+            const now = new Date();
+            let daysPassed = 0;
+
+            if (now.getTime() >= regMidnightEnd.getTime()) {
+                const diffMs = now.getTime() - regMidnightEnd.getTime();
+                daysPassed = 1 + Math.floor(diffMs / (24 * 60 * 60 * 1000));
+            }
+            return Math.max(0, baseDays - daysPassed);
+        }
+
+        function refreshAllSchoolsCountdown(shouldRender = false) {
+            let changed = false;
+            store.schools.forEach(s => {
+                if (!s.registeredDate) s.registeredDate = getLocalTodayStr();
+                if (s.initialDays === undefined || s.initialDays === null) {
+                    s.initialDays = Number(s.daysLeft || 0);
+                }
+                const newDaysLeft = calculateSchoolRemainingDays(s);
+                if (Number(s.daysLeft) !== newDaysLeft) {
+                    s.daysLeft = newDaysLeft;
+                    changed = true;
+                }
+                if (s.daysLeft === 0 && s.status === 'aktif' && Number(s.initialDays) > 0) {
+                    s.status = 'tidak_aktif';
+                    changed = true;
+                }
+            });
+
+            if (store.currentUser && store.currentUser.role === 'school' && store.currentUser.data) {
+                const updatedSchool = store.schools.find(s => s.id === store.currentUser.data.id || s.code === store.currentUser.data.code);
+                if (updatedSchool) {
+                    store.currentUser.data = updatedSchool;
+                }
+            }
+
+            if (changed) {
+                saveLocalBackup();
+                if (shouldRender && store.currentUser) {
+                    renderApp();
+                }
+            }
+        }
+
+        function startCountdownMidnightScheduler() {
+            refreshAllSchoolsCountdown(false);
+            setInterval(() => {
+                refreshAllSchoolsCountdown(true);
+            }, 30000);
+        }
+
         // Fungsi mengesan minggu semasa berdasarkan tarikh
         function detectWeekIdFromDate(dateStr) {
             if (!dateStr) return store.selectedWeekId;
@@ -272,7 +330,6 @@
                 localStorage.setItem('iganti_store_v3', JSON.stringify(snapshot));
             } catch (e) {}
         }
-
         function loadLocalBackup() {
             try {
                 const raw = localStorage.getItem('iganti_store_v3');
@@ -335,6 +392,7 @@
                         store.lastCheckedBackend = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         if (data.data) {
                             syncStoreWithBackend(data.data);
+                            refreshAllSchoolsCountdown(false);
                             saveLocalBackup();
                         }
                         if (!silent) showToast("Berjaya disambungkan ke Google Sheet Apps Script!", "success");
@@ -356,20 +414,25 @@
             }
             return store.isBackendConnected;
         }
-
         function syncStoreWithBackend(backendData) {
             if (!backendData) return;
             if (Array.isArray(backendData.schools) && backendData.schools.length > 0) {
-                store.schools = backendData.schools.map(s => ({
-                    ...s,
-                    id: String(s.id || 'SK' + Date.now()),
-                    year: Number(s.year || 2026),
-                    ic: String(s.ic || '').trim(),
-                    pass: String(s.pass || '').trim(),
-                    code: String(s.code || '').trim(),
-                    daysLeft: Number(s.daysLeft || 0),
-                    totalTeachers: Number(s.totalTeachers || 0)
-                }));
+                store.schools = backendData.schools.map(s => {
+                    const schoolObj = {
+                        ...s,
+                        id: String(s.id || 'SK' + Date.now()),
+                        year: Number(s.year || 2026),
+                        ic: String(s.ic || '').trim(),
+                        pass: String(s.pass || '').trim(),
+                        code: String(s.code || '').trim(),
+                        registeredDate: String(s.registeredDate || getLocalTodayStr()).trim(),
+                        initialDays: Number(s.initialDays !== undefined && s.initialDays !== "" ? s.initialDays : (s.daysLeft || 0)),
+                        daysLeft: Number(s.daysLeft || 0),
+                        totalTeachers: Number(s.totalTeachers || 0)
+                    };
+                    schoolObj.daysLeft = calculateSchoolRemainingDays(schoolObj);
+                    return schoolObj;
+                });
             }
             if (Array.isArray(backendData.payments) && backendData.payments.length > 0) {
                 store.payments = backendData.payments.map(p => ({
@@ -440,7 +503,6 @@
                 if (backendData.settings.saPass) store.superAdminAuth.pass = String(backendData.settings.saPass).trim();
             }
         }
-
         async function pushToBackend(action, payload) {
             saveLocalBackup();
             if (!API_URL || API_URL === "PASTE_APPS_SCRIPT_URL" || !API_URL.startsWith("http")) return;
@@ -541,7 +603,6 @@
                 onConfirm();
             };
         }
-
         // HELPER SESI SEKOLAH (PAGI / PETANG)
         function setSchoolSession(session) {
             store.schoolSession = session;
@@ -583,7 +644,6 @@
                 </div>
             `;
         }
-
         // ==========================================
         // HELPER PENGIRAAN MASA MENGAJAR HAKIKI & GANTI
         // ==========================================
@@ -615,6 +675,12 @@
         
         // NAVIGATION LOGIC
         function setRole(role, userData = {}) {
+            refreshAllSchoolsCountdown(false);
+            if (role === 'school' && userData) {
+                const freshSchool = store.schools.find(s => s.id === userData.id || s.code === userData.code) || userData;
+                freshSchool.daysLeft = calculateSchoolRemainingDays(freshSchool);
+                userData = freshSchool;
+            }
             store.currentUser = { role, data: userData };
             store.activeTab = 'dashboard';
             if (role === 'teacher') {
@@ -636,6 +702,7 @@
             showToast("Anda telah keluar dari sistem.");
         }
         function switchTab(tab) {
+            refreshAllSchoolsCountdown(false);
             store.activeTab = tab;
             renderApp();
         }
@@ -753,6 +820,7 @@
         
         // APPLICATION MAIN RENDERER
         function renderApp() {
+            refreshAllSchoolsCountdown(false);
             const app = document.getElementById('app');
             if (!store.currentUser) {
                 app.innerHTML = renderLoginPage();
@@ -786,6 +854,8 @@
                 teacher: store.currentUser.data.name || 'Guru'
             };
             const logoSrc = parseGoogleDriveUrl(store.appLogo);
+            const isSchoolRole = store.currentUser.role === 'school';
+            const schoolCountdown = isSchoolRole ? calculateSchoolRemainingDays(store.currentUser.data) : null;
             return `
                 <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -796,7 +866,13 @@
                                 <span class="text-xs text-brand-600 font-semibold tracking-wide uppercase">${roleLabels[store.currentUser.role]}</span>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2.5">
+                            ${isSchoolRole ? `
+                                <div class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border ${schoolCountdown > 30 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : schoolCountdown > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-red-50 border-red-200 text-red-700'}" title="Countdown Langganan Automatik (Tolak 1 hari pada 23:59 PM)">
+                                    <i class="fas fa-hourglass-half text-xs"></i>
+                                    <span class="text-xs font-extrabold">Baki: ${schoolCountdown} Hari</span>
+                                </div>
+                            ` : ''}
                             <div class="flex items-center space-x-1.5 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                                 <i class="fas fa-calendar-check text-brand-600 text-xs"></i>
                                 <span class="text-xs font-bold text-slate-600">Tahun:</span>
@@ -809,7 +885,7 @@
                                     </button>
                                 ` : ''}
                             </div>
-                            <span class="hidden md:inline-block text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
+                            <span class="hidden lg:inline-block text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
                                 <i class="far fa-calendar-alt text-brand-500 mr-2"></i>${getRealFormattedDate()}
                             </span>
                             <button onclick="logout()" class="inline-flex items-center space-x-2 text-sm font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition-colors">
@@ -971,6 +1047,7 @@
                 btn.textContent = 'Log Masuk';
             }
             if (role === 'school') {
+                refreshAllSchoolsCountdown(false);
                 const school = store.schools.find(s => {
                     const sIc = String(s.ic || '').trim().replace(/[-\s]/g, '');
                     const sCode = String(s.code || '').trim().toLowerCase();
@@ -1004,6 +1081,7 @@
         // 2. PAPARAN TETAPAN SUPER ADMIN
         // ==========================================
         function getSchoolsForSelectedYear() {
+            refreshAllSchoolsCountdown(false);
             return store.schools.filter(s => Number(s.year || 2026) === Number(store.selectedYear));
         }
         function getPaymentsForSelectedYear() {
@@ -1038,6 +1116,7 @@
         function sendSchoolReminderWhatsApp(schoolId) {
             const school = store.schools.find(s => s.id === schoolId);
             if (!school) return;
+            const remainingDays = calculateSchoolRemainingDays(school);
             const yearPayments = getPaymentsForSelectedYear();
             const pay = yearPayments.find(p => p.schoolName === school.name || p.schoolCode === school.code);
             const statusBayaran = pay ? pay.status : 'belum_bayar';
@@ -1045,7 +1124,8 @@
             const msg = encodeURIComponent(
                 `Salam & Salam Sejahtera ${school.adminName} (${school.name}),\n\n` +
                 `Peringatan mesra daripada Super Admin i-Ganti (Tahun ${store.selectedYear}):\n` +
-                `• Status Langganan: Baki ${school.daysLeft} hari lagi\n` +
+                `• Tarikh Berdaftar: ${school.registeredDate || todayStr}\n` +
+                `• Status Langganan: Baki ${remainingDays} hari lagi\n` +
                 `• Status Pembayaran: ${statusBayaran === 'sudah_bayar' ? 'SUDAH DIBAYAR' : 'PERLU DIJELASKAN'}\n\n` +
                 `Sila buat bayaran atau muat naik resit sekiranya berkenaan. Terima kasih!`
             );
@@ -1096,7 +1176,7 @@
                         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
                                 <h3 class="font-extrabold text-slate-800 text-base">Ringkasan Data Super Admin (Tahun ${store.selectedYear})</h3>
-                                <p class="text-xs text-slate-500">Semua statistik sekolah, langganan dan pembayaran disinkronkan mengikut tahun pilihan.</p>
+                                <p class="text-xs text-slate-500">Semua statistik sekolah, langganan (tolak 1 hari automatik setiap 23:59 PM) dan pembayaran disinkronkan.</p>
                             </div>
                             <div class="flex items-center space-x-2 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl">
                                 <span class="text-xs font-bold text-slate-700">Tahun Paparan:</span>
@@ -1128,7 +1208,7 @@
                                 <div class="text-3xl font-extrabold text-slate-800 mb-2">${activeSchools.length}</div>
                                 <select class="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-medium text-slate-600">
                                     <option>-- Senarai Sekolah Aktif --</option>
-                                    ${activeSchools.map(s => `<option>${s.name} (${s.daysLeft} hari baki)</option>`).join('')}
+                                    ${activeSchools.map(s => `<option>${s.name} (${calculateSchoolRemainingDays(s)} hari baki)</option>`).join('')}
                                 </select>
                             </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
@@ -1153,19 +1233,26 @@
                         </div>
                         
                         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                            <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center">
-                                <i class="fas fa-clock text-amber-500 mr-2"></i> Status Langganan Countdown & Peringatan WhatsApp (Tahun ${store.selectedYear})
-                            </h3>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center">
+                                    <i class="fas fa-clock text-amber-500 mr-2"></i> Status Langganan Countdown Automatik & Peringatan WhatsApp (Tahun ${store.selectedYear})
+                                </h3>
+                                <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+                                    <i class="fas fa-sync-alt text-brand-600 mr-1"></i>Auto tolak 1 hari setiap jam 23:59 PM
+                                </span>
+                            </div>
                             <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                                ${yearSchools.length > 0 ? yearSchools.map(s => `
+                                ${yearSchools.length > 0 ? yearSchools.map(s => {
+                                    const remDays = calculateSchoolRemainingDays(s);
+                                    return `
                                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
                                             <p class="font-bold text-sm text-slate-800">${s.name}</p>
-                                            <p class="text-xs text-slate-500">${s.code} | Tel: ${s.phone || 'Tiada'} | Tahun: ${s.year || store.selectedYear}</p>
+                                            <p class="text-xs text-slate-500">${s.code} | Tarikh Daftar: <span class="font-semibold text-slate-700">${s.registeredDate || todayStr}</span> | Tel: ${s.phone || 'Tiada'}</p>
                                         </div>
                                         <div class="flex items-center space-x-3">
-                                            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold ${s.daysLeft > 30 ? 'bg-emerald-100 text-emerald-700' : s.daysLeft > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}">
-                                                ${s.daysLeft} Hari Lagi
+                                            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold ${remDays > 30 ? 'bg-emerald-100 text-emerald-700' : remDays > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}">
+                                                ${remDays} Hari Lagi
                                             </span>
                                             <button onclick="sendSchoolReminderWhatsApp('${s.id}')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 flex items-center space-x-1.5">
                                                 <i class="fab fa-whatsapp text-sm"></i>
@@ -1173,7 +1260,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                `).join('') : `<p class="text-xs text-slate-400 italic text-center py-6">Tiada sekolah berdaftar bagi Tahun ${store.selectedYear}.</p>`}
+                                `}).join('') : `<p class="text-xs text-slate-400 italic text-center py-6">Tiada sekolah berdaftar bagi Tahun ${store.selectedYear}.</p>`}
                             </div>
                         </div>
                     </div>
@@ -1241,10 +1328,10 @@
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-bold">
                                     <tr>
-                                        <th class="p-4">Maklumat Sekolah</th>
+                                        <th class="p-4">Maklumat Sekolah & Tarikh Daftar</th>
                                         <th class="p-4">No. Telefon & WhatsApp</th>
                                         <th class="p-4">Pentadbir & ID Login</th>
-                                        <th class="p-4">Status & Countdown</th>
+                                        <th class="p-4">Status & Countdown Automatik</th>
                                         <th class="p-4 text-center">Tindakan</th>
                                     </tr>
                                 </thead>
@@ -1261,11 +1348,13 @@
             if (!schoolsList || schoolsList.length === 0) {
                 return `<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">Tiada sekolah berdaftar bagi Tahun ${store.selectedYear}.</td></tr>`;
             }
-            return schoolsList.map(s => `
+            return schoolsList.map(s => {
+                const remDays = calculateSchoolRemainingDays(s);
+                return `
                 <tr class="hover:bg-slate-50/80 transition-colors">
                     <td class="p-4">
                         <div class="font-bold text-slate-800">${s.name}</div>
-                        <div class="text-xs text-slate-500">Kod: <span class="font-mono font-bold">${s.code}</span> | Tahun: <span class="font-bold text-brand-600">${s.year || store.selectedYear}</span></div>
+                        <div class="text-xs text-slate-500">Kod: <span class="font-mono font-bold">${s.code}</span> | Daftar: <span class="font-semibold text-brand-700">${s.registeredDate || todayStr}</span></div>
                     </td>
                     <td class="p-4">
                         <div class="flex items-center space-x-2">
@@ -1280,13 +1369,16 @@
                         <div class="text-xs text-slate-500">IC Login: <span class="font-mono font-bold text-slate-700">${s.ic}</span> | Pass: <span class="font-mono">${s.pass}</span></div>
                     </td>
                     <td class="p-4">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} uppercase">
-                                ${s.status === 'aktif' ? 'Aktif' : 'Tidak Aktif'}
-                            </span>
-                            <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                                ${s.daysLeft} Hari
-                            </span>
+                        <div class="flex flex-col space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} uppercase">
+                                    ${s.status === 'aktif' ? 'Aktif' : 'Tidak Aktif'}
+                                </span>
+                                <span class="text-xs font-extrabold ${remDays > 30 ? 'text-emerald-700 bg-emerald-50' : remDays > 0 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'} px-2 py-0.5 rounded-md border">
+                                    ${remDays} Hari
+                                </span>
+                            </div>
+                            <span class="text-[10px] text-slate-400">Tolak 1 hari pada 23:59 PM</span>
                         </div>
                     </td>
                     <td class="p-4 text-center">
@@ -1300,7 +1392,7 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
         function filterSchools() {
             const query = document.getElementById('school-search').value.toLowerCase();
@@ -1319,6 +1411,7 @@
         function openAddSchoolModal(schoolId = null) {
             const school = schoolId ? store.schools.find(s => s.id === schoolId) : null;
             const isEdit = !!school;
+            const currentRemDays = school ? calculateSchoolRemainingDays(school) : 365;
             const modalHtml = `
                 <div id="school-form-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
@@ -1385,9 +1478,18 @@
                                     </select>
                                 </div>
                             </div>
-                            <div>
-                                <label class="block font-semibold mb-1">Bilangan Hari Aktif (Countdown)</label>
-                                <input type="number" id="m-school-days" required value="${school ? school.daysLeft : 365}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Tarikh Berdaftar *</label>
+                                    <input type="date" id="m-school-reg-date" required value="${school && school.registeredDate ? school.registeredDate : getLocalTodayStr()}" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Tempoh Langganan (Hari) *</label>
+                                    <input type="number" id="m-school-days" required value="${currentRemDays}" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-brand-700">
+                                </div>
+                                <p class="col-span-2 text-[11px] text-slate-500">
+                                    <i class="fas fa-info-circle text-brand-600 mr-1"></i>Countdown akan ditolak 1 hari secara automatik pada setiap <strong>23:59 PM</strong> bermula daripada tarikh berdaftar.
+                                </p>
                             </div>
                             <div class="flex justify-end space-x-3 pt-4 border-t">
                                 <button type="button" onclick="document.getElementById('school-form-modal').remove()" class="px-4 py-2 text-slate-600 bg-slate-100 rounded-xl font-bold">Batal</button>
@@ -1414,25 +1516,30 @@
             const ic = document.getElementById('m-admin-ic').value.trim();
             const pass = document.getElementById('m-admin-pass').value.trim();
             const status = document.getElementById('m-school-status').value;
-            const daysLeft = parseInt(document.getElementById('m-school-days').value, 10) || 0;
+            const registeredDate = document.getElementById('m-school-reg-date').value || getLocalTodayStr();
+            const initialDays = parseInt(document.getElementById('m-school-days').value, 10) || 0;
+            
+            const tempSchool = { registeredDate, initialDays, daysLeft: initialDays };
+            const calculatedDaysLeft = calculateSchoolRemainingDays(tempSchool);
+
             let payloadObj;
             if (schoolId && schoolId !== 'null') {
                 const school = store.schools.find(s => s.id === schoolId);
                 if (school) {
-                    Object.assign(school, { name, year, code, phone, email, address, adminName, ic, pass, status, daysLeft });
+                    Object.assign(school, { name, year, code, phone, email, address, adminName, ic, pass, status, registeredDate, initialDays, daysLeft: calculatedDaysLeft });
                     payloadObj = school;
                 }
             } else {
                 payloadObj = {
                     id: 'SK' + Date.now(),
-                    year, name, code, phone, email, address, adminName, ic, pass, status, daysLeft, totalTeachers: 0
+                    year, name, code, phone, email, address, adminName, ic, pass, status, registeredDate, initialDays, daysLeft: calculatedDaysLeft, totalTeachers: 0
                 };
                 store.schools.push(payloadObj);
             }
             pushToBackend('saveSchool', payloadObj);
             document.getElementById('school-form-modal').remove();
             renderApp();
-            showToast("Data sekolah berjaya disimpan & sedia untuk log masuk!", "success");
+            showToast("Data sekolah & countdown automatik berjaya disimpan!", "success");
         }
         function renderPaymentManagement() {
             const yearPayments = getPaymentsForSelectedYear();
@@ -1764,6 +1871,8 @@
         function renderSchoolTabContent() {
             const curSession = store.schoolSession || 'pagi';
             const sessionLabel = getSessionLabel(curSession);
+            const currentSchool = store.schools.find(s => s.id === store.currentUser.data.id || s.code === store.currentUser.data.code) || store.currentUser.data;
+            const remainingDays = calculateSchoolRemainingDays(currentSchool);
 
             if (store.activeTab === 'dashboard') {
                 const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
@@ -1772,9 +1881,24 @@
                 
                 const yearReliefs = store.reliefList.filter(r => Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) && (r.session || 'pagi') === curSession);
                 const dateFilteredReliefs = yearReliefs.filter(r => r.date === store.reliefFilterDate);
-
                 return `
                     <div class="space-y-6">
+                        <div class="bg-gradient-to-r from-brand-700 to-brand-600 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-lg">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-sm">Status Langganan Akaun Sekolah: ${currentSchool.name || 'Sekolah Berdaftar'}</h4>
+                                    <p class="text-xs text-brand-100">Tarikh Berdaftar: <strong>${currentSchool.registeredDate || todayStr}</strong> • Automatik tolak 1 hari setiap jam <strong>23:59 PM</strong></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 bg-white/15 px-4 py-2 rounded-xl border border-white/20">
+                                <span class="text-xs uppercase font-bold text-brand-100">Baki Countdown:</span>
+                                <span class="text-lg font-extrabold">${remainingDays} Hari</span>
+                            </div>
+                        </div>
+
                         ${renderSessionSwitcherBanner(`Paparan statistik, kehadiran & bebanan bagi ${sessionLabel}.`)}
                         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
@@ -2125,12 +2249,94 @@
             });
         }
         
-        // 3.3 INDIVIDUAL SUBSCRIPTION INVOICE FOR SCHOOL
+        // 3.3 INDIVIDUAL SUBSCRIPTION INVOICE FOR SCHOOL (DENGAN MAKLUMAT AKAUN BANK RASMI & COUNTDOWN)
+        function copyBankAccountNo(accNo) {
+            navigator.clipboard.writeText(accNo).then(() => {
+                showToast("Nombor akaun bank berjaya disalin!", "success");
+            }).catch(() => {
+                showToast("Nombor akaun: " + accNo, "info");
+            });
+        }
+
         function renderSchoolIndividualSubscription() {
-            const currentSchool = store.currentUser.data;
+            const currentSchool = store.schools.find(s => s.id === store.currentUser.data.id || s.code === store.currentUser.data.code) || store.currentUser.data;
             const schoolPayments = store.payments.filter(p => p.schoolName === currentSchool.name || p.schoolCode === currentSchool.code);
+            const remainingDays = calculateSchoolRemainingDays(currentSchool);
+            const qrParsed = parseGoogleDriveUrl(store.bankInfo.qrCode);
+
             return `
                 <div class="space-y-6">
+                    <!-- KAD STATUS COUNTDOWN LANGGANAN SEKOLAH -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 rounded-2xl ${remainingDays > 30 ? 'bg-emerald-50 text-emerald-600' : remainingDays > 0 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'} flex items-center justify-center text-2xl shrink-0">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-slate-900 text-base">Status Tempoh Langganan Sistem (${currentSchool.name || 'Sekolah'})</h3>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Tarikh Berdaftar: <span class="font-bold text-slate-700">${currentSchool.registeredDate || todayStr}</span> • 
+                                    Countdown ditolak 1 hari secara automatik pada setiap <span class="font-bold text-brand-600">23:59 PM</span>.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-200 w-full md:w-auto justify-between md:justify-end">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Baki Hari Aktif:</span>
+                            <span class="text-2xl font-extrabold ${remainingDays > 30 ? 'text-emerald-600' : remainingDays > 0 ? 'text-amber-600' : 'text-red-600'}">${remainingDays} Hari</span>
+                        </div>
+                    </div>
+
+                    <!-- KAD MAKLUMAT AKAUN BANK RASMI PEMBAYARAN & QR CODE -->
+                    <div class="bg-white p-6 rounded-2xl border border-brand-200/80 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-extrabold text-slate-900 text-base flex items-center">
+                                    <i class="fas fa-university text-brand-600 mr-2"></i>Maklumat Akaun Bank Rasmi Pembayaran
+                                </h3>
+                                <p class="text-xs text-slate-500">Sila lakukan pembayaran langganan ke akaun rasmi di bawah atau imbas Kod QR sebelum memuat naik resit.</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 self-start sm:self-auto">
+                                Rujukan Rasmi Pembayaran
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                            <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80">
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase block mb-1">Nama Bank</span>
+                                    <p class="font-extrabold text-slate-900 text-sm">${store.bankInfo.bankName || '-'}</p>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80">
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase block mb-1">Nama Akaun</span>
+                                    <p class="font-extrabold text-slate-900 text-sm">${store.bankInfo.accountName || '-'}</p>
+                                </div>
+                                <div class="p-4 bg-brand-50/70 rounded-xl border border-brand-200 flex items-center justify-between gap-2">
+                                    <div>
+                                        <span class="text-[11px] font-bold text-brand-700 uppercase block mb-1">Nombor Akaun</span>
+                                        <p class="font-mono font-extrabold text-brand-800 text-base">${store.bankInfo.accountNo || '-'}</p>
+                                    </div>
+                                    <button type="button" onclick="copyBankAccountNo('${store.bankInfo.accountNo}')" class="p-2 bg-white hover:bg-brand-100 text-brand-700 rounded-lg border border-brand-200 shadow-sm transition-colors" title="Salin Nombor Akaun">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                <a href="${qrParsed}" target="_blank" class="shrink-0 group relative block">
+                                    <img src="${qrParsed}" alt="QR Code Pembayaran" class="w-24 h-24 rounded-xl object-cover border-2 border-white shadow-md group-hover:scale-105 transition-transform" onError="this.src='https://placehold.co/200x200/0284c7/ffffff?text=QR+Code'">
+                                </a>
+                                <div class="space-y-1">
+                                    <span class="text-xs font-extrabold text-slate-800 block"><i class="fas fa-qrcode text-brand-600 mr-1"></i>QR Code Akaun Bank</span>
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">Imbas QR menggunakan aplikasi perbankan anda untuk membuat bayaran terus.</p>
+                                    <a href="${qrParsed}" target="_blank" class="inline-block text-[11px] font-bold text-brand-600 hover:underline pt-1">
+                                        <i class="fas fa-expand-alt mr-1"></i>Besarkan QR Code
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEJARAH PEMBAYARAN INVOIS LANGGANAN -->
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex justify-between items-center border-b pb-3">
                             <div>
@@ -3414,71 +3620,70 @@
                             <select onchange="changeWorkloadWeek(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-600">
                                 ${store.weeks.map(w => `<option value="${w.id}" ${store.selectedWeekId === w.id ? 'selected' : ''}>${w.name} (${w.startDate} - ${w.endDate})</option>`).join('')}
                             </select>
-                            <button onclick="exportReportPNG916()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center space-x-1">
-                                <i class="fas fa-file-image"></i>
-                                <span>Cetak PNG (9:16)</span>
+                            <button onclick="exportReportPNG916()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center space-x-2">
+                                <i class="fas fa-image"></i><span>Muat Turun PNG (9:16)</span>
+                            </button>
+                            <button onclick="window.print()" class="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow transition-all flex items-center space-x-2">
+                                <i class="fas fa-print"></i><span>Cetak Laporan</span>
                             </button>
                         </div>
                     </div>
-                    <div class="flex justify-center">
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-slate-900 font-sans print-container print-portrait-9-16" id="printable-report">
-                            <div class="text-center border-b-2 border-slate-900 pb-3 space-y-0.5">
-                                <h2 class="text-base font-extrabold uppercase tracking-wide">${currentSchool.name || 'SK SERI BINTANG'}</h2>
-                                <p class="text-[10px] text-slate-600 font-semibold">${currentSchool.address || 'Jalan Anjung Rahmat, Kuala Lumpur'}</p>
-                                <p class="text-[10px] text-slate-500">Kod: ${currentSchool.code || 'WBA0001'} | Tel: ${currentSchool.phone || '03-92841122'}</p>
-                            </div>
-                            <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                                <span>LAPORAN GURU GANTI (${sessionLabel.toUpperCase()})</span>
-                                <span class="text-brand-700 font-mono">${weekObj.name.toUpperCase()} (${store.selectedYear})</span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full border-collapse border border-slate-300 text-[10px]">
-                                    <thead>
-                                        <tr class="bg-slate-100 text-slate-800">
-                                            <th class="border border-slate-300 p-1 text-center">Bil</th>
-                                            <th class="border border-slate-300 p-1 text-center">Tarikh</th>
-                                            <th class="border border-slate-300 p-1 text-center">Masa Mengikut Jadual</th>
-                                            <th class="border border-slate-300 p-1">Guru Tidak Hadir</th>
-                                            <th class="border border-slate-300 p-1">Guru Ganti Dilantik</th>
-                                            <th class="border border-slate-300 p-1 text-center">Kelas</th>
+                    <div id="official-report-doc" class="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 text-slate-900 font-sans print-container">
+                        <div class="text-center border-b-2 border-slate-900 pb-4">
+                            <h2 class="text-xl font-extrabold uppercase tracking-wide">${currentSchool.name || 'SK SERI BINTANG'}</h2>
+                            <p class="text-xs text-slate-600 font-medium">${currentSchool.address || 'Jalan Anjung Rahmat, Kuala Lumpur'}</p>
+                            <h3 class="text-base font-bold mt-2 text-brand-700 underline">LAPORAN REKOD LANTIKAN GURU GANTI (${sessionLabel.toUpperCase()} - ${store.selectedYear})</h3>
+                            <p class="text-xs font-semibold text-slate-500 mt-1">Tempoh: ${weekObj.name} (${weekObj.startDate} hingga ${weekObj.endDate}) | Tarikh Cetak: ${getRealFormattedDate()}</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse border border-slate-300 text-xs">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-800 font-bold">
+                                        <th class="border border-slate-300 p-2 text-center w-10">Bil</th>
+                                        <th class="border border-slate-300 p-2">Tarikh</th>
+                                        <th class="border border-slate-300 p-2 text-center">Masa / Slot</th>
+                                        <th class="border border-slate-300 p-2">Guru Tidak Hadir</th>
+                                        <th class="border border-slate-300 p-2 text-center">Kelas & Subjek</th>
+                                        <th class="border border-slate-300 p-2">Guru Ganti Dilantik</th>
+                                        <th class="border border-slate-300 p-2 text-center">Status Pengesahan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filteredReliefList.length > 0 ? filteredReliefList.map((r, i) => `
+                                        <tr>
+                                            <td class="border border-slate-300 p-2 text-center">${i + 1}</td>
+                                            <td class="border border-slate-300 p-2 font-semibold">${r.date}</td>
+                                            <td class="border border-slate-300 p-2 text-center font-mono font-bold">
+                                                <div>${r.slot}</div>
+                                                <div class="text-[10px] text-slate-500">${r.time || ''}</div>
+                                            </td>
+                                            <td class="border border-slate-300 p-2 text-red-700 font-semibold">${r.absentTeacher}</td>
+                                            <td class="border border-slate-300 p-2 text-center">${r.className} (${r.subject})</td>
+                                            <td class="border border-slate-300 p-2 text-emerald-800 font-bold">${r.substituteName}</td>
+                                            <td class="border border-slate-300 p-2 text-center">
+                                                <span class="font-bold text-[10px] uppercase ${r.confirmedBySubstitute ? 'text-emerald-700' : 'text-amber-700'}">
+                                                    ${r.confirmedBySubstitute ? 'Disahkan' : 'Menunggu Pengesahan'}
+                                                </span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${filteredReliefList.length > 0 ? filteredReliefList.map((r, i) => `
-                                            <tr>
-                                                <td class="border border-slate-300 p-1 text-center font-bold">${i + 1}</td>
-                                                <td class="border border-slate-300 p-1 text-center font-mono text-[9px]">${r.date}</td>
-                                                <td class="border border-slate-300 p-1 text-center font-mono font-bold text-[9px] bg-slate-50">
-                                                    <div>${r.slot}</div>
-                                                    <div class="text-[8px] text-slate-500 font-normal">${r.time || ''}</div>
-                                                </td>
-                                                <td class="border border-slate-300 p-1 text-red-700 font-bold truncate max-w-[80px]">${r.absentTeacher}</td>
-                                                <td class="border border-slate-300 p-1 text-emerald-800 font-bold truncate max-w-[80px]">${r.substituteName}</td>
-                                                <td class="border border-slate-300 p-1 text-center font-semibold">${r.className}</td>
-                                            </tr>
-                                        `).join('') : `
-                                            <tr>
-                                                <td colspan="6" class="border border-slate-300 p-3 text-center italic text-slate-500">Tiada rekod laporan ganti (${sessionLabel}) bagi minggu ini (${weekObj.name}).</td>
-                                            </tr>
-                                        `}
-                                    </tbody>
-                                </table>
+                                    `).join('') : `
+                                        <tr>
+                                            <td colspan="7" class="border border-slate-300 p-4 text-center text-slate-400 italic">Tiada rekod guru ganti (${sessionLabel}) bagi minggu dan tahun ini.</td>
+                                        </tr>
+                                    `}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="grid grid-cols-2 gap-8 pt-6 text-xs font-semibold">
+                            <div class="space-y-8">
+                                <p>Disediakan Oleh:</p>
+                                <div class="border-b border-slate-400 w-44"></div>
+                                <p class="font-bold uppercase">( ${curSession === 'petang' ? 'PENYELARAS / PK PETANG' : 'PENYELARAS JADUAL WAKTU'} )</p>
                             </div>
-                            <div class="grid grid-cols-2 gap-4 pt-4 text-[9px] font-semibold">
-                                <div class="space-y-6">
-                                    <p>Disemak Oleh:</p>
-                                    <div class="border-b border-slate-400 w-28"></div>
-                                    <div>
-                                        <p class="font-bold uppercase">( ${curSession === 'petang' ? 'PK PETANG' : 'PK PENTADBIRAN'} )</p>
-                                    </div>
-                                </div>
-                                <div class="space-y-6">
-                                    <p>Disahkan Oleh:</p>
-                                    <div class="border-b border-slate-400 w-28"></div>
-                                    <div>
-                                        <p class="font-bold uppercase">( GURU BESAR )</p>
-                                    </div>
-                                </div>
+                            <div class="space-y-8">
+                                <p>Disahkan Oleh:</p>
+                                <div class="border-b border-slate-400 w-44"></div>
+                                <p class="font-bold uppercase">( GURU BESAR / PENGETUA )</p>
                             </div>
                         </div>
                     </div>
@@ -3487,388 +3692,315 @@
         }
         function exportReportPNG916() {
             const curSession = store.schoolSession || 'pagi';
-            const reportElement = document.getElementById('printable-report');
-            showToast(`Menjana gambar PNG 9:16 (${getSessionLabel(curSession)})...`, "info");
-            html2canvas(reportElement, { scale: 2 }).then(canvas => {
+            const doc = document.getElementById('official-report-doc');
+            doc.classList.add('print-portrait-9-16');
+            showToast(`Menjana Laporan Format 9:16 PNG (${getSessionLabel(curSession)})...`, "info");
+            
+            html2canvas(doc, { scale: 2 }).then(canvas => {
+                doc.classList.remove('print-portrait-9-16');
                 const link = document.createElement('a');
-                link.download = `Laporan_Guru_Ganti_${curSession.toUpperCase()}_${store.selectedWeekId}_${store.selectedYear}.png`;
+                link.download = `Laporan_Guru_Ganti_${curSession.toUpperCase()}_${store.selectedYear}_${store.selectedWeekId}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                showToast("Gambar PNG 9:16 berjaya dimuat turun!", "success");
+                showToast("Laporan PNG (9:16) berjaya dimuat turun!", "success");
             });
         }
         
         // ==========================================
-        // 4. PAPARAN GURU (KEKALKAN SEMUA FUNGSI)
+        // 4. PAPARAN GURU (KEKAL SEMUA FUNGSI)
         // ==========================================
+        function changeTeacherDutyDate(dateVal) {
+            store.teacherDutyDate = dateVal;
+            store.selectedYear = getYearFromDate(dateVal);
+            store.selectedWeekId = detectWeekIdFromDate(dateVal);
+            renderApp();
+        }
         function renderTeacherView() {
-            const currentTeacher = store.currentUser.data;
-            const days = ["Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"];
-            const weekObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
+            const teacher = store.currentUser.data;
+            const teacherSession = teacher.session || 'pagi';
+            const sessionLabel = getSessionLabel(teacherSession);
+            const selectedDateStr = store.teacherDutyDate || getLocalTodayStr();
+            const dutyDayName = getDayNameFromDate(selectedDateStr);
             
-            const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
-            const teacherSession = realTeacherObj.session || 'pagi';
-            const relevantSlots = store.timeSlots.filter(s => (s.session || (String(s.slot).startsWith('P') ? 'petang' : 'pagi')) === teacherSession);
-            
-            const activeYear = store.selectedYear;
-            const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
-            const myDutyReliefs = store.reliefList.filter(r => 
-                Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
-                (r.substituteId === realTeacherObj.id || r.substituteName === realTeacherObj.name) &&
-                r.date === store.teacherDutyDate
+            const myReliefDuties = store.reliefList.filter(r => 
+                Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) &&
+                r.substituteName.trim().toLowerCase() === teacher.name.trim().toLowerCase() &&
+                r.date === selectedDateStr
             );
             
-            const reliefOnSelectedDay = store.reliefList.filter(r => 
-                Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
-                r.substituteName === realTeacherObj.name &&
-                r.date === store.teacherDutyDate
-            ).length;
-            
-            const currentReliefSlotsInWeek = store.reliefList.filter(r => 
-                Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
-                r.substituteName === realTeacherObj.name &&
-                (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId
-            ).length;
-            
-            const hakikiSlotsWeekly = getTeacherHakikiSlotsForYear(realTeacherObj, activeYear);
-            const hakikiSlotsDaily = getTeacherHakikiSlotsForDay(realTeacherObj, selectedDayName, activeYear);
-            const myTodayMasterSlots = store.timetable.filter(tt => 
-                Number(tt.year || 2026) === Number(activeYear) && 
-                tt.teacherName.trim().toLowerCase() === realTeacherObj.name.trim().toLowerCase() &&
-                tt.day === selectedDayName
+            const myDailyTimetable = store.timetable.filter(tt => 
+                Number(tt.year || 2026) === Number(store.selectedYear) &&
+                tt.teacherName.trim().toLowerCase() === teacher.name.trim().toLowerCase() && 
+                tt.day === dutyDayName
             );
+            const totalHakikiSlotsForDate = getTeacherHakikiSlotsForDay(teacher, dutyDayName, store.selectedYear);
+            const totalReliefSlotsForDate = myReliefDuties.length;
+            const totalCombinedSlotsForDate = totalHakikiSlotsForDate + totalReliefSlotsForDate;
             return `
                 <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <h2 class="text-xl font-extrabold text-slate-800">Selamat Datang, ${realTeacherObj.name}</h2>
-                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${teacherSession === 'petang' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${getSessionLabel(teacherSession)}</span>
-                            </div>
-                            <p class="text-xs text-slate-500 mt-1">ID IC: ${realTeacherObj.ic} | Subjek: ${realTeacherObj.subjects ? realTeacherObj.subjects.join(', ') : 'Guru'} | Tahun Semasa: <span class="font-bold text-brand-600">${activeYear}</span></p>
-                        </div>
-                        <button onclick="openTeacherSelfAbsenceModal()" class="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center space-x-2">
-                            <i class="fas fa-user-times"></i><span>Isi Rekod Ketidakhadiran Saya</span>
+                    <div class="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto hide-scrollbar">
+                        <button onclick="switchTab('dashboard')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'dashboard' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                            <i class="fas fa-home mr-2"></i>Utama & Tugas Ganti
+                        </button>
+                        <button onclick="switchTab('my_schedule')" class="px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${store.activeTab === 'my_schedule' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-200'}">
+                            <i class="fas fa-calendar-check mr-2"></i>Jadual Saya (${store.selectedYear})
                         </button>
                     </div>
-                    
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-base flex items-center">
-                                    <i class="fas fa-user-clock text-amber-500 mr-2"></i>Tugas Guru Ganti Saya (Tarikh: ${store.teacherDutyDate} - ${selectedDayName})
-                                </h3>
-                                <p class="text-xs text-slate-500">Masa dan kelas yang perlu diganti oleh anda pada tarikh & hari ini (${activeYear}).</p>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-bold text-slate-700">Pilihan Tarikh:</span>
-                                <input type="date" value="${store.teacherDutyDate}" onchange="changeTeacherDutyDate(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-600">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${myDutyReliefs.length > 0 ? myDutyReliefs.map(dr => `
-                                <div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-3 relative">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-extrabold text-amber-800 font-mono bg-amber-200/60 px-2 py-0.5 rounded-md">Slot ${dr.slot} (${dr.time || ''})</span>
-                                        <span class="text-[11px] font-bold ${dr.confirmedBySubstitute ? 'text-emerald-700' : 'text-amber-700'}">
-                                            ${dr.confirmedBySubstitute ? '✓ Disahkan' : 'Belum Sah'}
-                                        </span>
+                    ${store.activeTab === 'dashboard' ? `
+                        <div class="space-y-6">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-lg">
+                                        <i class="fas fa-calendar-day"></i>
                                     </div>
-                                    <h4 class="font-extrabold text-slate-900 text-base">${dr.className}</h4>
-                                    <p class="text-xs text-slate-700">Subjek: <span class="font-bold text-slate-900">${dr.subject}</span></p>
-                                    <p class="text-xs text-slate-500">Menggantikan: <span class="font-semibold text-red-600">${dr.absentTeacher}</span></p>
-                                    
-                                    <div class="pt-2 border-t border-amber-200 flex justify-end">
-                                        ${dr.confirmedBySubstitute ? `
-                                            <button disabled class="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-1 cursor-default">
-                                                <i class="fas fa-check-circle"></i>
-                                                <span>Telah Disahkan</span>
-                                            </button>
-                                        ` : `
-                                            <button onclick="confirmTeacherDuty('${dr.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center space-x-1">
-                                                <i class="fas fa-check"></i>
-                                                <span>Sahkan</span>
-                                            </button>
-                                        `}
+                                    <div>
+                                        <h3 class="font-extrabold text-slate-800 text-sm">Paparan Rekod & Tugas Guru (${sessionLabel})</h3>
+                                        <p class="text-xs text-slate-500">Tarikh paparan semasa: <span class="font-bold text-brand-700">${selectedDateStr} (${dutyDayName})</span></p>
                                     </div>
                                 </div>
-                            `).join('') : `
-                                <div class="col-span-full p-6 text-center text-xs text-slate-400 italic bg-slate-50 rounded-xl border border-slate-100">
-                                    Tiada jadual kelas ganti untuk anda pada tarikh (${store.teacherDutyDate} - ${selectedDayName}).
+                                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                    <button onclick="changeTeacherDutyDate('${getLocalTodayStr()}')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all">
+                                        Hari Ini
+                                    </button>
+                                    <div class="flex items-center space-x-2 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl flex-1 sm:flex-initial">
+                                        <span class="text-xs font-bold text-slate-700">Pilih Tarikh:</span>
+                                        <input type="date" value="${selectedDateStr}" onchange="changeTeacherDutyDate(this.value)" class="bg-transparent font-extrabold text-xs text-brand-700 focus:outline-none cursor-pointer">
+                                    </div>
                                 </div>
-                            `}
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-sm flex items-center">
-                                    <i class="fas fa-balance-scale text-brand-500 mr-2"></i>Bebanan Masa Mengajar Saya (Sync Hari Semasa: ${selectedDayName})
-                                </h3>
-                                <p class="text-xs text-slate-500">Disinkronkan terus daripada <span class="font-bold text-slate-700">Jadual Waktu Induk Sekolah</span> bagi hari semasa (<span class="font-bold text-amber-700">${selectedDayName}, ${store.teacherDutyDate}</span>), Minggu Semasa (<span class="font-bold text-slate-700">${weekObj.name}</span>), dan Tahun (<span class="font-bold text-brand-600">${activeYear}</span>).</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-semibold text-slate-500">Minggu Semasa:</span>
-                                <select onchange="changeWorkloadWeek(this.value)" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-600">
-                                    ${store.weeks.map(w => `<option value="${w.id}" ${store.selectedWeekId === w.id ? 'selected' : ''}>${w.name}</option>`).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
-                            <div class="p-4 bg-brand-50 border border-brand-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Hakiki Hari Ini (${selectedDayName})</p>
-                                <p class="text-2xl font-extrabold text-brand-700">${hakikiSlotsDaily} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Jumlah Mingguan (${activeYear}): <span class="font-bold">${hakikiSlotsWeekly} Waktu</span></p>
-                            </div>
-                            <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Waktu Ganti Hari Ini (${selectedDayName})</p>
-                                <p class="text-2xl font-extrabold text-amber-700">${reliefOnSelectedDay} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Minggu Ini (${weekObj.name}): <span class="font-bold">${currentReliefSlotsInWeek} Waktu</span></p>
-                            </div>
-                            <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Bebanan Hari Ini</p>
-                                <p class="text-2xl font-extrabold text-emerald-700">${hakikiSlotsDaily + reliefOnSelectedDay} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">${selectedDayName}, ${store.teacherDutyDate}</p>
-                            </div>
-                            <div class="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                                <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Mingguan (${weekObj.name})</p>
-                                <p class="text-2xl font-extrabold text-purple-700">${hakikiSlotsWeekly + currentReliefSlotsInWeek} Waktu</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Hakiki (${hakikiSlotsWeekly}) + Ganti (${currentReliefSlotsInWeek})</p>
-                            </div>
-                        </div>
 
-                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                            <p class="text-xs font-bold text-slate-700 mb-2 flex items-center">
-                                <i class="fas fa-calendar-day text-brand-600 mr-1.5"></i>Slot Mengajar Hakiki Anda Pada Hari ${selectedDayName} (Jadual Induk ${activeYear}):
-                            </p>
-                            ${myTodayMasterSlots.length > 0 ? `
-                                <div class="flex flex-wrap gap-2">
-                                    ${myTodayMasterSlots.map(ms => {
-                                        const ts = store.timeSlots.find(s => s.slot === ms.slot);
-                                        return `
-                                            <span class="px-3 py-1.5 bg-white border border-brand-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm">
-                                                <span class="font-mono font-bold text-brand-700">${ms.slot}</span> (${ts ? ts.time : ''}) • <span class="font-bold">${ms.className}</span> - ${ms.subject}
-                                            </span>
-                                        `;
-                                    }).join('')}
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 uppercase block">Masa Mengajar (${dutyDayName})</span>
+                                        <div class="text-3xl font-extrabold text-brand-600 mt-1">${totalHakikiSlotsForDate} Waktu</div>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">Jadual Hakiki (${selectedDateStr})</p>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
                                 </div>
-                            ` : `
-                                <p class="text-xs text-slate-400 italic">Tiada slot hakiki direkodkan dalam Jadual Induk pada hari ${selectedDayName} (${activeYear}).</p>
-                            `}
-                        </div>
-                        <div class="h-44">
-                            <canvas id="teacherSelfChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-base">Jadual Waktu Mengajar Peribadi (${activeYear})</h3>
-                                <p class="text-xs text-slate-500">Status Kebenaran Kemaskini: <span class="font-bold ${store.teacherCanEditSchedule ? 'text-emerald-600' : 'text-red-500'}">${store.teacherCanEditSchedule ? 'guru boleh kemaskini' : 'guru tidak dibenarkan kemaskini'}</span></p>
+
+                                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 uppercase block">Masa Ganti (${dutyDayName})</span>
+                                        <div class="text-3xl font-extrabold text-amber-600 mt-1">${totalReliefSlotsForDate} Waktu</div>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">Tugas Relief (${selectedDateStr})</p>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 uppercase block">Jumlah Masa Mengajar</span>
+                                        <div class="text-3xl font-extrabold text-emerald-600 mt-1">${totalCombinedSlotsForDate} Waktu</div>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">Hakiki + Ganti (${selectedDateStr})</p>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
                             </div>
-                            ${store.teacherCanEditSchedule ? `
-                                <button onclick="openAddSlotModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center space-x-2">
-                                    <i class="fas fa-plus"></i><span>Tambah / Kemaskini Jadual</span>
-                                </button>
-                            ` : ''}
+
+                            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                                <h3 class="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                                    <span><i class="fas fa-bell text-amber-500 mr-2"></i> Notifikasi Tugas Guru Ganti (${selectedDateStr} - ${dutyDayName})</span>
+                                    <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">${myReliefDuties.length} Tugas</span>
+                                </h3>
+                                <div class="space-y-3">
+                                    ${myReliefDuties.length > 0 ? myReliefDuties.map(r => `
+                                        <div class="p-4 rounded-xl border ${r.confirmedBySubstitute ? 'bg-emerald-50/70 border-emerald-200' : 'bg-amber-50/70 border-amber-200'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                            <div>
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="font-mono font-bold text-xs px-2 py-0.5 rounded bg-white text-slate-800 shadow-sm border border-slate-200">${r.slot} (${r.time || ''})</span>
+                                                    <span class="text-xs font-bold text-slate-500">${r.date}</span>
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${r.session === 'petang' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${getSessionLabel(r.session)}</span>
+                                                </div>
+                                                <p class="font-bold text-slate-900 mt-1">Kelas: ${r.className} | Subjek: ${r.subject}</p>
+                                                <p class="text-xs text-slate-600">Menggantikan: <span class="font-semibold text-red-600">${r.absentTeacher}</span></p>
+                                            </div>
+                                            <div>
+                                                ${r.confirmedBySubstitute ? `
+                                                    <span class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm inline-flex items-center space-x-1">
+                                                        <i class="fas fa-check-circle"></i><span>Sudah Disahkan</span>
+                                                    </span>
+                                                ` : `
+                                                    <button onclick="confirmReliefDuty('${r.id}')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">
+                                                        Sahkan Kehadiran Ganti
+                                                    </button>
+                                                `}
+                                            </div>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="p-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-sm">
+                                            <i class="far fa-smile text-2xl text-slate-300 mb-2 block"></i>
+                                            Tiada tugasan guru ganti pada tarikh <strong>${selectedDateStr} (${dutyDayName})</strong>.
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                                <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+                                    <i class="fas fa-book-open text-brand-600 mr-2"></i> Jadual Mengajar Hakiki Pada ${dutyDayName} (${selectedDateStr})
+                                </h3>
+                                ${myDailyTimetable.length > 0 ? `
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        ${myDailyTimetable.map(tt => {
+                                            const slotObj = store.timeSlots.find(ts => ts.slot === tt.slot);
+                                            const timeRange = slotObj ? slotObj.time : '';
+                                            return `
+                                                <div class="p-3.5 bg-brand-50/60 border border-brand-200 rounded-xl flex justify-between items-center">
+                                                    <div>
+                                                        <span class="font-mono font-extrabold text-xs text-brand-700 bg-white px-2 py-0.5 rounded border border-brand-200">${tt.slot} (${timeRange})</span>
+                                                        <p class="font-extrabold text-slate-900 text-sm mt-1.5">${tt.subject}</p>
+                                                        <p class="text-xs font-semibold text-slate-600">Kelas: ${tt.className}</p>
+                                                    </div>
+                                                    <div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm">
+                                                        <i class="fas fa-chalkboard"></i>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                ` : `
+                                    <p class="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                        Tiada rekod jadual waktu mengajar hakiki pada hari ${dutyDayName} (${selectedDateStr}).
+                                    </p>
+                                `}
+                            </div>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200">
-                                        <th class="p-3 border border-slate-200 text-slate-500 font-bold uppercase w-24">Masa</th>
-                                        ${days.map(day => `<th class="p-3 border border-slate-200 text-center font-extrabold ${day === selectedDayName ? 'bg-amber-100 text-amber-900' : 'text-slate-700'}">${day} ${day === selectedDayName ? '(Hari Ini)' : ''}</th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${(relevantSlots.length > 0 ? relevantSlots : store.timeSlots).map(slot => `
-                                        <tr>
-                                            <td class="p-2 border border-slate-200 font-bold bg-slate-50 text-brand-600 font-mono text-center">
-                                                <div>${slot.slot}</div>
-                                                <div class="text-[10px] text-slate-400 font-normal">${slot.time}</div>
-                                            </td>
-                                            ${days.map(day => {
-                                                const match = store.timetable.find(tt => 
-                                                    Number(tt.year || 2026) === Number(activeYear) &&
-                                                    tt.teacherName.trim().toLowerCase() === realTeacherObj.name.trim().toLowerCase() && 
-                                                    tt.day === day && 
-                                                    tt.slot === slot.slot
-                                                );
-                                                return `
-                                                    <td class="p-2 border border-slate-200 text-center align-middle h-16 ${day === selectedDayName ? 'bg-amber-50/30' : ''}">
-                                                        ${match ? `
-                                                            <div class="p-2 bg-brand-50 border border-brand-200 rounded-xl relative group">
-                                                                ${store.teacherCanEditSchedule ? `<button onclick="deleteTimetableEntry('${match.id}')" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow"><i class="fas fa-times"></i></button>` : ''}
-                                                                <p class="font-bold text-brand-800">${match.subject}</p>
-                                                                <p class="text-[11px] font-semibold text-slate-600">${match.className}</p>
-                                                            </div>
-                                                        ` : '<span class="text-slate-300">-</span>'}
-                                                    </td>
-                                                `;
-                                            }).join('')}
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    ` : renderTeacherScheduleView()}
                 </div>
             `;
         }
-        function changeTeacherDutyDate(d) {
-            store.teacherDutyDate = d;
-            store.selectedYear = getYearFromDate(d);
-            store.selectedWeekId = detectWeekIdFromDate(d);
-            renderApp();
-        }
-        function confirmTeacherDuty(relId) {
+        function confirmReliefDuty(relId) {
             const rel = store.reliefList.find(r => r.id === relId);
             if (rel) {
                 rel.confirmedBySubstitute = true;
                 rel.status = 'Disahkan';
                 pushToBackend('saveRelief', rel);
                 renderApp();
-                showToast("Tugas guru ganti anda berjaya disahkan!", "success");
+                showToast("Tugasan guru ganti telah disahkan!", "success");
             }
         }
-        function openTeacherSelfAbsenceModal() {
-            const currentTeacher = store.currentUser.data;
-            const teacherSession = currentTeacher.session || 'pagi';
-            const modalHtml = `
-                <div id="self-abs-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
-                        <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                            <h3 class="font-bold text-slate-900">Maklum Ketidakhadiran Saya</h3>
-                            <button onclick="document.getElementById('self-abs-modal').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        function renderTeacherScheduleView() {
+            const teacher = store.currentUser.data;
+            const teacherSession = teacher.session || 'pagi';
+            const days = ["Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"];
+            const sessionSlots = store.timeSlots.filter(s => (s.session || (String(s.slot).startsWith('P') ? 'petang' : 'pagi')) === teacherSession);
+            const myTimetable = store.timetable.filter(tt => Number(tt.year || 2026) === Number(store.selectedYear) && tt.teacherName.trim().toLowerCase() === teacher.name.trim().toLowerCase());
+            return `
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base">Jadual Waktu Peribadi (${getSessionLabel(teacherSession)} - Tahun ${store.selectedYear})</h3>
+                            <p class="text-xs text-slate-500">Status Kebenaran Admin: <span class="font-bold ${store.teacherCanEditSchedule ? 'text-emerald-600' : 'text-red-600'}">${store.teacherCanEditSchedule ? 'Dibenarkan Kemaskini' : 'Paparan Sahaja'}</span></p>
                         </div>
-                        <form onsubmit="saveTeacherSelfAbsence(event)" class="space-y-4 text-sm">
-                            <div>
-                                <label class="block font-semibold mb-1">Nama Guru</label>
-                                <input type="text" disabled value="${currentTeacher.name} (${getSessionLabel(teacherSession)})" class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-600">
-                            </div>
-                            <div>
-                                <label class="block font-semibold mb-1">Tarikh Ketidakhadiran *</label>
-                                <input type="date" id="self-abs-date" required value="${store.teacherDutyDate}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                            </div>
-                            <div>
-                                <label class="block font-semibold mb-1">Sebab Ketidakhadiran *</label>
-                                <textarea id="self-abs-reason" required rows="2" placeholder="Sila nyatakan sebab ketidakhadiran..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"></textarea>
-                            </div>
-                            <div class="flex justify-end space-x-3 pt-4 border-t">
-                                <button type="button" onclick="document.getElementById('self-abs-modal').remove()" class="px-4 py-2 text-slate-600 bg-slate-100 rounded-xl font-bold">Batal</button>
-                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl font-bold shadow-md">Hantar Rekod</button>
-                            </div>
-                        </form>
+                        ${store.teacherCanEditSchedule ? `
+                            <button onclick="openAddSlotModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-md">
+                                <i class="fas fa-plus mr-1"></i> Tambah / Edit Slot (${store.selectedYear})
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 border-b">
+                                    <th class="p-3 border text-slate-600 font-bold uppercase w-28">Masa / Hari</th>
+                                    ${days.map(day => `<th class="p-3 border text-center font-bold text-slate-700">${day}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sessionSlots.map(slot => `
+                                    <tr>
+                                        <td class="p-2 border font-bold bg-slate-50 text-brand-600 font-mono text-center">
+                                            <div>${slot.slot}</div>
+                                            <div class="text-[10px] text-slate-400">${slot.time}</div>
+                                        </td>
+                                        ${days.map(day => {
+                                            const entry = myTimetable.find(tt => tt.day === day && tt.slot === slot.slot);
+                                            return `
+                                                <td class="p-2 border text-center min-w-[120px] ${entry ? 'bg-brand-50/70' : ''}">
+                                                    ${entry ? `
+                                                        <div class="p-2 bg-white border border-brand-200 rounded-lg shadow-sm relative group">
+                                                            ${store.teacherCanEditSchedule ? `<button onclick="deleteTimetableEntry('${entry.id}')" class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-times"></i></button>` : ''}
+                                                            <p class="font-bold text-slate-800">${entry.subject}</p>
+                                                            <p class="text-[11px] font-semibold text-brand-600">${entry.className}</p>
+                                                        </div>
+                                                    ` : '<span class="text-slate-300">-</span>'}
+                                                </td>
+                                            `;
+                                        }).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-        }
-        function saveTeacherSelfAbsence(e) {
-            e.preventDefault();
-            const currentTeacher = store.currentUser.data;
-            const teacherSession = currentTeacher.session || 'pagi';
-            const date = document.getElementById('self-abs-date').value;
-            const reason = document.getElementById('self-abs-reason').value;
-            const entryYear = getYearFromDate(date);
-            const absObj = {
-                id: 'ABS-' + Date.now(),
-                year: entryYear,
-                session: teacherSession,
-                teacherId: currentTeacher.id,
-                teacherName: currentTeacher.name,
-                date,
-                reason,
-                timestamp: new Date().toTimeString().substring(0, 5)
-            };
-            store.absences.push(absObj);
-            pushToBackend('saveAbsence', absObj);
-            autoUpdateReliefFromAbsences(date, teacherSession);
-            document.getElementById('self-abs-modal').remove();
-            renderApp();
-            showToast("Rekod ketidakhadiran anda telah direkod & dikemaskini!", "success");
         }
         
-        // CHART INITIALIZATION
+        // CHART.JS INITIALIZATION
+        let workloadChartInstance = null;
         function initCharts() {
+            const ctx = document.getElementById('teacherWorkloadChart');
+            if (!ctx) return;
+            if (workloadChartInstance) {
+                workloadChartInstance.destroy();
+            }
             const curSession = store.schoolSession || 'pagi';
-            const workloadCtx = document.getElementById('teacherWorkloadChart');
-            if (workloadCtx) {
-                const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
-                const labels = sessionTeachers.map(t => t.name.split(' ')[0]);
-                const hakikiData = sessionTeachers.map(t => getTeacherHakikiSlotsForYear(t, store.selectedYear, curSession));
-                const gantiData = sessionTeachers.map(t => store.reliefList.filter(r => 
+            const sessionTeachers = store.teachers.filter(t => (t.session || 'pagi') === curSession);
+            const labels = sessionTeachers.map(t => t.name.split(' ')[0]);
+            const hakikiData = sessionTeachers.map(t => getTeacherHakikiSlotsForYear(t, store.selectedYear, curSession));
+            const reliefData = sessionTeachers.map(t => 
+                store.reliefList.filter(r => 
                     Number(r.year || getYearFromDate(r.date)) === Number(store.selectedYear) &&
                     (r.session || 'pagi') === curSession &&
                     r.substituteName === t.name && 
                     (store.viewAllWeeksWorkload || (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId)
-                ).length);
-                new Chart(workloadCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: `Masa Mengajar Hakiki (${store.selectedYear})`, data: hakikiData, backgroundColor: '#0284c7', borderRadius: 6 },
-                            { label: store.viewAllWeeksWorkload ? `Masa Ganti (${store.selectedYear})` : `Masa Ganti (${store.selectedWeekId})`, data: gantiData, backgroundColor: '#f59e0b', borderRadius: 6 }
-                        ]
+                ).length
+            );
+            const wObj = store.weeks.find(w => w.id === store.selectedWeekId) || store.weeks[0];
+            workloadChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: `Waktu Mengajar Hakiki (${getSessionLabel(curSession)} - ${store.selectedYear})`,
+                            data: hakikiData,
+                            backgroundColor: '#0284c7',
+                            borderRadius: 6
+                        },
+                        {
+                            label: store.viewAllWeeksWorkload ? `Waktu Ganti (Keseluruhan ${store.selectedYear})` : `Waktu Ganti (${wObj.name} - ${store.selectedYear})`,
+                            data: reliefData,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: { stacked: true, beginAtZero: true }
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12, weight: '600' } } }
                     }
-                });
-            }
-            const selfChartCtx = document.getElementById('teacherSelfChart');
-            if (selfChartCtx && store.currentUser?.role === 'teacher') {
-                const currentTeacher = store.currentUser.data;
-                const realTeacherObj = store.teachers.find(t => t.id === currentTeacher.id || t.name === currentTeacher.name) || currentTeacher;
-                const activeYear = store.selectedYear;
-                const selectedDayName = getDayNameFromDate(store.teacherDutyDate);
-                const reliefToday = store.reliefList.filter(r => 
-                    Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
-                    r.substituteName === realTeacherObj.name &&
-                    r.date === store.teacherDutyDate
-                ).length;
-                const reliefSlotsWeek = store.reliefList.filter(r => 
-                    Number(r.year || getYearFromDate(r.date)) === Number(activeYear) &&
-                    r.substituteName === realTeacherObj.name &&
-                    (r.weekId || detectWeekIdFromDate(r.date)) === store.selectedWeekId
-                ).length;
-                const hakikiWeekly = getTeacherHakikiSlotsForYear(realTeacherObj, activeYear);
-                const hakikiDaily = getTeacherHakikiSlotsForDay(realTeacherObj, selectedDayName, activeYear);
-                new Chart(selfChartCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: [
-                            `Hakiki Hari Ini (${selectedDayName})`,
-                            `Ganti Hari Ini (${selectedDayName})`,
-                            `Hakiki Mingguan (${activeYear})`,
-                            `Ganti Minggu (${store.selectedWeekId})`
-                        ],
-                        datasets: [{
-                            label: 'Bilangan Waktu',
-                            data: [hakikiDaily, reliefToday, hakikiWeekly, reliefSlotsWeek],
-                            backgroundColor: ['#0284c7', '#f59e0b', '#0f766e', '#7c3aed'],
-                            borderRadius: 8
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
+                }
+            });
         }
         
-        // INITIALIZE APP
-        window.addEventListener('DOMContentLoaded', () => {
+        // INITIALIZE APP ON LOAD
+        document.addEventListener('DOMContentLoaded', () => {
             loadLocalBackup();
+            startCountdownMidnightScheduler();
             renderApp();
             checkAppsScriptConnection(true, false);
         });
